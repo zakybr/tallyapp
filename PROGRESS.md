@@ -17,7 +17,7 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
       login; optional API key mode), `jobs.ts` (job registry + Connection check), Agents screen (history, run log, 7-day usage,
       cancel / cancel all). Verified: check job ran on claude-opus-5-5 "via Claude Code login", loaded all 5 skills, 2.6k tokens;
       cancellation leaves no orphan CLI process. Code review for phases 3+4 is done together at the end of phase 4.
-- [~] **4. Research + score** — code complete; **the real-case run (AOMAS, White Pointer) still has to be done on the Mac.**
+- [x] **4. Research + score** — real-case run done 29 Oct 2026 on the Mac (see "Real-case acceptance").
       robots.txt + rate limit (`src/main/audit/robots.ts`), Playwright site audit at desktop + 375px with screenshots
       (`src/main/audit/siteAudit.ts`), Lead Finder / Research / Scorer jobs and the orchestrator (`src/main/agents/research.ts`),
       evidence rule enforced in code (`src/main/agents/evidence.ts`), verdict consistency check (`expectedVerdict`), Find screen,
