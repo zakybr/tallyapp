@@ -4,6 +4,8 @@ import { resolve, sep } from 'node:path'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
+import { retentionSweep } from './privacy'
+import { getRepo } from './context'
 import { cancelAll } from './agents/runner'
 
 const here = fileURLToPath(new URL('.', import.meta.url))
@@ -66,6 +68,8 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   registerFileProtocol()
   registerDataHandlers()
+  const swept = retentionSweep(getRepo())
+  if (swept.people) console.log(`Retention: removed ${swept.people} contacts from ${swept.companies} closed prospects`)
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

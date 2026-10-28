@@ -51,6 +51,11 @@ export const ContactFoundSchema = z.object({
 })
 
 export const ResearchSchema = z.object({
+  identity: z.object({
+    resolved: z.boolean().describe('true only when you found the business itself: its website, listing, register entry or social page'),
+    website: z.string().nullable().describe('The real website you found, even if it ranks badly'),
+    howFound: z.string().describe('The search, domain guess or directory that found it, or everything you tried if you could not')
+  }),
   legalName: z.string().nullable(),
   phone: z.string().nullable(),
   address: z.string().nullable(),
@@ -60,7 +65,7 @@ export const ResearchSchema = z.object({
     companyNumber: z.string().nullable(),
     incorporated: z.string().nullable(),
     status: z.string().nullable(),
-    directors: z.array(z.string()),
+    directors: z.array(z.string().max(80)).describe('Names only. Never residential addresses.'),
     lastAnnualReturn: z.string().nullable(),
     sourceUrl: nullableUrl
   }).nullable(),

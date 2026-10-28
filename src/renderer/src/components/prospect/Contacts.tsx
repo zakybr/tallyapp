@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ShieldAlert, Ban } from 'lucide-react'
+import { Plus, Trash2, ShieldAlert, Ban, FileDown } from 'lucide-react'
 import { api } from '@/lib/api'
 import { InlineField } from '../InlineField'
 import { useToast } from '../Toast'
@@ -37,6 +37,7 @@ export function Contacts({ companyId, contacts, suppression }: { companyId: numb
               </div>
               <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
                 {c.email && !suppressed && <button title="Opted out: add to suppression list" onClick={() => void optOut(c)} className="rounded p-1 text-ink-3 hover:bg-paper-2 hover:text-ink"><Ban size={14} /></button>}
+                <button title="Export everything held on this person (Privacy Act access request)" onClick={async () => { const r = await api.exportPerson(c.id); if (r) { toast('Saved. Send them this file.'); void api.revealPath(r.file) } }} className="rounded p-1 text-ink-3 hover:bg-paper-2 hover:text-ink"><FileDown size={14} /></button>
                 <button title="Delete this person (Privacy Act)" onClick={() => void remove(c)} className="rounded p-1 text-ink-3 hover:bg-pass-wash hover:text-danger"><Trash2 size={14} /></button>
               </div>
             </div>

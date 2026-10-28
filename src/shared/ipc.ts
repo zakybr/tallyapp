@@ -26,6 +26,8 @@ export interface TallyApi {
 
   upsertContact(input: ContactInput & { id?: number }): Promise<Contact>
   deletePerson(contactId: number): Promise<{ removedDrafts: number }>
+  exportPerson(contactId: number): Promise<{ file: string } | null>
+  runRetention(): Promise<{ companies: number; people: number }>
 
   updateOutreach(id: number, patch: { body?: string; subject?: string | null; contactId?: number | null }): Promise<Outreach>
   markSent(id: number): Promise<Outreach>
@@ -68,7 +70,7 @@ export type ApiMethod = keyof TallyApi
 /* Kept as a runtime list so preload can build the bridge without importing main. */
 export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
-  'upsertContact', 'deletePerson', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
+  'upsertContact', 'deletePerson', 'exportPerson', 'runRetention', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
   'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'openPath', 'logCall'
 ]

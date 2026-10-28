@@ -199,10 +199,59 @@ export class Repo {
       for (const o of this.listOutreach(c.companyId)) {
         this.db.prepare('UPDATE outreach SET body = ?, subject = ? WHERE id = ?').run(scrub(o.body), o.subject ? scrub(o.subject) : null, o.id)
       }
+      // Agent run logs can quote what an agent read about this person.
+      for (const l of this.db.prepare(`SELECT l.id, l.message, l.detail FROM job_logs l JOIN jobs j ON j.id = l.job_id WHERE j.company_id = ?`).all(c.companyId) as Row[]) {
+        const m = scrub(String(l.message))
+        const d = l.detail == null ? null : scrub(String(l.detail))
+        if (m !== l.message || d !== l.detail) this.db.prepare('UPDATE job_logs SET message = ?, detail = ? WHERE id = ?').run(m, d, l.id)
+      }
       this.db.prepare('DELETE FROM contacts WHERE id = ?').run(contactId)
       this.addActivity(c.companyId, 'note', 'A contact was deleted at their request (Privacy Act).')
       return { removedDrafts: drafts }
     })()
+  }
+
+  /*
+    Privacy Act 2020, IPP 6: everything held about one person, for an
+    access request.
+  */
+  personData(contactId: number): Record<string, unknown> | null {
+    const c = this.getContact(contactId)
+    if (!c) return null
+    const company = this.getCompany(c.companyId)
+    const needles = [c.email, c.name, c.phone].filter((v): v is string => !!v && v.trim().length > 1).map((v) => v.toLowerCase())
+    const mentions = (s: string | null) => !!s && needles.some((n) => s.toLowerCase().includes(n))
+    return {
+      exportedAt: now(),
+      heldBy: 'Tally Marketing Limited, on one computer (local database, not shared).',
+      purpose: 'Business-to-business outreach about marketing services.',
+      contact: { name: c.name, role: c.role, email: c.email, phone: c.phone, whereFound: c.emailSourceUrl, basis: c.consentBasis, recordedAt: c.createdAt },
+      business: company ? { name: company.name, website: company.website } : null,
+      messagesDrafted: this.listOutreach(c.companyId).filter((o) => o.contactId === c.id || mentions(o.body)).map((o) => ({ kind: o.kind, subject: o.subject, body: o.body, sentAt: o.sentAt })),
+      notes: this.listActivities(c.companyId).filter((a) => mentions(a.summary) || mentions(a.outcome)).map((a) => ({ at: a.at, note: a.summary, outcome: a.outcome })),
+      callDebriefs: (this.db.prepare('SELECT raw_notes, summary, created_at FROM debriefs WHERE company_id = ?').all(c.companyId) as Row[])
+        .filter((d) => mentions(String(d.raw_notes)) || mentions(String(d.summary))).map((d) => ({ at: d.created_at, summary: d.summary })),
+      researchFindings: this.listResearch(c.companyId).filter((r) => mentions(r.finding)).map((r) => ({ finding: r.finding, source: r.sourceUrl, checkedAt: r.checkedAt })),
+      suppressed: this.listSuppression().some((s) => c.email && s.email === c.email.toLowerCase())
+    }
+  }
+
+  /*
+    IPP 9: do not keep personal information longer than needed. Companies
+    closed as Pass or Lost, untouched for `months`, lose their contact
+    people. The business row and its pass reason stay so it is never
+    researched twice; that is business information, not personal.
+  */
+  retentionDue(months: number): { companyId: number; contactIds: number[] }[] {
+    const cutoff = new Date()
+    cutoff.setMonth(cutoff.getMonth() - months)
+    const rows = this.db.prepare(
+      `SELECT c.id company_id, ct.id contact_id FROM companies c JOIN contacts ct ON ct.company_id = c.id
+       WHERE c.stage IN ('pass', 'lost') AND c.updated_at < ?`
+    ).all(cutoff.toISOString()) as { company_id: number; contact_id: number }[]
+    const by = new Map<number, number[]>()
+    for (const r of rows) by.set(r.company_id, [...(by.get(r.company_id) ?? []), r.contact_id])
+    return [...by.entries()].map(([companyId, contactIds]) => ({ companyId, contactIds }))
   }
 
   /* ---------- research ---------- */

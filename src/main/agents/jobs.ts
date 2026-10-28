@@ -8,7 +8,7 @@ import { startJob, type JobContext } from './runner'
 import type { Job, JobKind } from '@shared/domain'
 
 export type JobPayload = { companyId?: number; [k: string]: unknown }
-type Starter = (payload: JobPayload) => { title: string; companyId: number | null; work: (ctx: JobContext) => Promise<void> }
+type Starter = (payload: JobPayload) => { title: string; companyId: number | null; work: (ctx: JobContext) => Promise<unknown> }
 
 const starters = new Map<JobKind, Starter>()
 
@@ -33,7 +33,7 @@ registerJob('check', () => ({
       systemPrompt: 'You are a connection check for the Tally desktop app. Answer briefly.',
       prompt: 'List the names of the skills available to you that start with "tally-", then reply with the structured result.',
       builtinTools: [],
-      skills: ['tally-qualify', 'tally-site-audit', 'tally-call-script', 'tally-cold-email', 'tally-audit-pdf'],
+      skills: ['tally-qualify', 'tally-site-audit', 'tally-find-business', 'tally-call-script', 'tally-cold-email', 'tally-audit-pdf'],
       schema: z.object({ ok: z.boolean(), skills: z.array(z.string()) }),
       maxTurns: 4
     })

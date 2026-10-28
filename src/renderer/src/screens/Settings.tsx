@@ -147,6 +147,20 @@ export function Settings() {
           </div>
         </Block>
 
+        <Block title="Privacy" body="Privacy Act 2020 and the Unsolicited Electronic Messages Act 2007.">
+          <ul className="flex list-disc flex-col gap-1.5 pl-4 text-[12.5px] leading-relaxed text-ink-2">
+            <li><b>What is kept:</b> business contact details needed for outreach (name, role, business email and phone, and where each was found). No home addresses, personal accounts or private details.</li>
+            <li><b>Where:</b> one SQLite file and its screenshots on this Mac. Nothing is uploaded to a Tally server. Backups and CSV exports contain personal information: keep them on encrypted storage (FileVault).</li>
+            <li><b>Agents:</b> research and drafting send business details to Anthropic for processing through your Claude account. That is an overseas disclosure (IPP 12), so keep it to business details. In claude.ai → Settings → Privacy, turn off the option that lets your chats be used to improve models.</li>
+            <li><b>Requests:</b> on each contact, the export button saves everything held about that person (access, IPP 6), fields can be corrected inline (IPP 7), and delete removes them everywhere (IPP 9).</li>
+            <li><b>Opt-outs:</b> the suppression list survives deletion so an opt-out is honoured for good.</li>
+          </ul>
+          <div className="flex items-end gap-3">
+            <div className="w-56"><Field label="Delete contacts after (months)" hint="Counted from when a prospect is closed as Pass or Lost. 0 turns this off."><Input type="number" value={s.retentionMonths} onChange={(e) => setS({ ...s, retentionMonths: num(e.target.value) })} onBlur={() => void commit({ retentionMonths: s.retentionMonths })} /></Field></div>
+            <Button onClick={async () => { const r = await api.runRetention(); toast(r.people ? `Removed ${r.people} contacts from ${r.companies} closed prospects` : 'Nothing due for deletion') }}>Run now</Button>
+          </div>
+        </Block>
+
         <Block title="Appearance">
           <div className="flex gap-2">
             {(['system', 'light', 'dark'] as const).map((t) => (

@@ -8,6 +8,7 @@ import { findDuplicate, localDate, monthlyRecurring, nextWorkingDay, trailing12,
 import { CALL_OUTCOME_LABEL, type TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
+import { deleteCompanyFully, retentionSweep } from './privacy'
 import { start } from './agents/jobs'
 import './agents/research'
 import './agents/prepare'
@@ -28,7 +29,7 @@ export function registerDataHandlers(): void {
   handle('getCompany', async (id) => repo.detail(id))
   handle('createCompany', async (input) => { const c = repo.createCompany(input); changed('companies', c.id); return c })
   handle('updateCompany', async (id, patch) => { const c = repo.updateCompany(id, patch); changed('companies', id); return c })
-  handle('deleteCompany', async (id) => { repo.deleteCompany(id); changed('companies', id) })
+  handle('deleteCompany', async (id) => { deleteCompanyFully(repo, id); changed('companies', id) })
   handle('addNote', async (companyId, text) => { repo.addActivity(companyId, 'note', text); changed('activities', companyId) })
 
   handle('upsertContact', async (input) => { const c = repo.upsertContact(input); changed('contacts', c.companyId); return c })
@@ -117,6 +118,16 @@ export function registerDataHandlers(): void {
   })
   handle('jobLog', async (id) => repo.jobLog(id))
   handle('agentInfo', async () => ({ skillsDir: skillsDir(), executable: claudeExecutable() ?? null, authMode: repo.getSettings().authMode }))
+  handle('exportPerson', async (contactId) => {
+    const data = repo.personData(contactId)
+    if (!data) return null
+    const who = String((data.contact as { name?: string | null; email?: string | null }).name ?? (data.contact as { email?: string | null }).email ?? 'person').replace(/[^a-z0-9]+/gi, '-').toLowerCase()
+    const pick = await dialog.showSaveDialog(mainWindow(), { title: 'Save their data (Privacy Act access request)', defaultPath: `privacy-request-${who}-${stamp()}.json` })
+    if (pick.canceled || !pick.filePath) return null
+    writeFileSync(pick.filePath, JSON.stringify(data, null, 2))
+    return { file: pick.filePath }
+  })
+  handle('runRetention', async () => { const r = retentionSweep(repo); changed('contacts'); return r })
   handle('revealPath', async (p) => { shell.showItemInFolder(p) })
   // Only files Tally wrote (audits, evidence) can be opened from the renderer.
   handle('openPath', async (p) => {

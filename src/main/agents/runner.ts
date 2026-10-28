@@ -34,6 +34,8 @@ export interface AgentRun<T> {
   skills?: string[]
   schema?: z.ZodType<T>
   maxTurns?: number
+  /* Default model for this agent; Settings → Model overrides it. */
+  model?: string
   agents?: Record<string, AgentDefinition>
 }
 
@@ -42,7 +44,7 @@ class Cancelled extends Error {}
 const now = () => new Date().toISOString()
 const short = (s: string, n = 220) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
-export function startJob(kind: JobKind, title: string, companyId: number | null, work: (ctx: JobContext) => Promise<void>): Job {
+export function startJob(kind: JobKind, title: string, companyId: number | null, work: (ctx: JobContext) => Promise<unknown>): Job {
   const repo = getRepo()
   const job: Job = {
     id: randomUUID(), kind, companyId, title, status: 'running', startedAt: now(), endedAt: null, durationMs: null,
@@ -127,7 +129,7 @@ async function runAgent<T>(job: Job, abort: AbortController, log: JobContext['lo
       agents: spec.agents,
       outputFormat: spec.schema ? { type: 'json_schema', schema: z.toJSONSchema(spec.schema, { target: 'draft-7' }) as Record<string, unknown> } : undefined,
       maxTurns: spec.maxTurns ?? 40,
-      model: settings.model || undefined,
+      model: settings.model || spec.model || undefined,
       abortController: abort,
       env: agentEnv(settings),
       pathToClaudeCodeExecutable: claudeExecutable(),

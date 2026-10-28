@@ -8,7 +8,7 @@ import { realSettings } from '../secrets'
 import { registerJob } from './jobs'
 import { applyEvidenceRule } from './evidence'
 import { DEFS, ORCHESTRATOR_PROMPT, asSubagent, type AgentDef } from './definitions'
-import { adsTool, companiesOfficeTool, fetchPageTool, pipelineCheckTool, placesTool, saveTool, siteAuditTool } from './tools'
+import { adsTool, companiesOfficeTool, findDomainTool, fetchPageTool, pipelineCheckTool, placesTool, saveTool, siteAuditTool } from './tools'
 import type { JobContext } from './runner'
 import { tool } from '@anthropic-ai/claude-agent-sdk'
 import { LeadsSchema, ResearchSchema, ScoreSchema } from '@shared/schemas'
@@ -27,6 +27,7 @@ export function buildTools(names: string[], ctx: JobContext, companyId: number |
     else if (n === 'check_pipeline') out.push(pipelineCheckTool())
     else if (n === 'places_search') { if (s.placesApiKey) out.push(placesTool(ctx)) }
     else if (n === 'companies_office_link') out.push(companiesOfficeTool())
+    else if (n === 'find_domain') out.push(findDomainTool(ctx))
     else if (n === 'read_record' && companyId) out.push(tool('read_record', 'Read the saved research record, score and contacts for this company.', {}, async () => ({ content: [{ type: 'text' as const, text: researchRecordFor(companyId) }] })))
     else if (n === 'site_audit' && companyId) out.push(siteAuditTool(ctx, companyId))
     else if (n === 'ads_transparency_check' && companyId) out.push(adsTool(ctx, companyId))
@@ -37,15 +38,16 @@ export function buildTools(names: string[], ctx: JobContext, companyId: number |
   return out
 }
 
-export async function runDef(ctx: JobContext, def: AgentDef, prompt: string, companyId: number | null, extra: Record<string, ReturnType<typeof saveTool>> = {}) {
+export async function runDef(ctx: JobContext, def: AgentDef, prompt: string, companyId: number | null, extra: Record<string, ReturnType<typeof saveTool>> = {}): Promise<Set<string>> {
   const s = realSettings(getRepo())
   const done = new Set<string>()
   await ctx.runAgent({
     name: def.key, systemPrompt: def.prompt(s), prompt, builtinTools: def.builtinTools,
-    tools: buildTools(def.tallyTools, ctx, companyId, done, extra), skills: def.skills, maxTurns: def.maxTurns
+    tools: buildTools(def.tallyTools, ctx, companyId, done, extra), skills: def.skills, maxTurns: def.maxTurns, model: def.model
   })
   const saveName = def.tallyTools.find((t) => t.startsWith('save_'))
   if (saveName && !done.has(saveName)) throw new Error(`${def.key} finished without saving a result. Nothing was changed.`)
+  return done
 }
 
 /* ---------- concurrency: research is heavy (a browser per site) ---------- */
@@ -53,7 +55,7 @@ export async function runDef(ctx: JobContext, def: AgentDef, prompt: string, com
 let active = 0
 const waiting: (() => void)[] = []
 async function slot<T>(ctx: JobContext, fn: () => Promise<T>): Promise<T> {
-  if (active >= 2) {
+  if (active >= 1) {
     ctx.log('info', 'Queued behind other research jobs')
     await new Promise<void>((r) => waiting.push(r))
   }
@@ -93,14 +95,20 @@ function researchSaveTool(ctx: JobContext, companyId: number, done: Set<string>)
       const co = repo.getCompany(companyId)!
       repo.updateCompany(companyId, {
         legalName: r.legalName ?? r.companiesOffice?.legalName ?? co.legalName,
+        website: co.website ?? r.identity.website,
         phone: co.phone ?? r.phone, address: co.address ?? r.address, googleListingUrl: co.googleListingUrl ?? r.googleListingUrl,
         ...(co.stage === 'discovered' ? { stage: 'researched' as Stage } : {})
       })
       const gaps = records.filter((x) => x.gapType && x.verified).length
       const unverified = records.filter((x) => !x.verified).length
       repo.addActivity(companyId, 'research', `Researched: ${records.length} findings, ${gaps} verified gaps, ${unverified} unverified`)
+      if (!r.identity.resolved) {
+        repo.updateCompany(companyId, { nextStep: 'Confirm the exact business name or website, then re-research', verdict: null, verdictReason: `Could not identify the business. Tried: ${r.identity.howFound}` })
+        repo.addActivity(companyId, 'note', 'Research could not identify the business, so it was not scored. Being hard to find is a gap, not a reason to pass.')
+      }
     })()
     done.add('save_research')
+    if (!r.identity.resolved) done.add('identity_unresolved')
     emit('data:changed', { table: 'research', companyId })
     const downgraded = records.filter((x, i) => x.verified !== r.findings[i].verified).length
     return `Saved ${records.length} findings.${downgraded ? ` ${downgraded} absence claims were marked unverified because the contact/booking page was not in pagesChecked.` : ''}`
@@ -204,7 +212,11 @@ registerJob('research', (p) => {
         ctx.log('finding', `Skipped: ${prior.name} was already passed on. ${prior.reason ?? ''}`)
         return
       }
-      await slot(ctx, () => runDef(ctx, DEFS.research, `Research this company.\n\n${companyBrief(c)}`, id))
+      const done = await slot(ctx, () => runDef(ctx, DEFS.research, `Research this company.\n\n${companyBrief(c)}`, id))
+      if (done.has('identity_unresolved')) {
+        ctx.log('finding', 'Could not identify this business, so it was not scored. Check the name or add the website, then re-research.')
+        return
+      }
       if (p.thenScore !== false) await runDef(ctx, DEFS.scorer, scorePrompt(id), id)
     }
   }

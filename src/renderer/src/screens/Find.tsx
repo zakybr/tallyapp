@@ -40,7 +40,7 @@ export function Find() {
     for (const id of ids) await api.startJob('research', { companyId: id })
     setBusy(false)
     setPicked(new Set())
-    toast(`Researching ${ids.length} ${ids.length === 1 ? 'company' : 'companies'}. Two run at a time.`)
+    toast(`Researching ${ids.length} ${ids.length === 1 ? 'company' : 'companies'}. One runs at a time.`)
     navigate({ name: 'agents' })
   }
 

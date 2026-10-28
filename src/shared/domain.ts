@@ -253,6 +253,8 @@ export interface Settings {
   placesApiKey: string
   model: string
   auditDelayMs: number
+  /* Months after a Pass or Lost before contact people are deleted (Privacy Act IPP 9). */
+  retentionMonths: number
   sender: { name: string; company: string; phone: string; email: string; website: string }
   theme: 'system' | 'light' | 'dark'
 }
@@ -282,6 +284,7 @@ export const DEFAULT_SETTINGS: Settings = {
   placesApiKey: '',
   model: '',
   auditDelayMs: 2500,
+  retentionMonths: 12,
   sender: {
     name: 'Zak Rachmadi',
     company: 'Tally Marketing Limited',

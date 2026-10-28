@@ -47,6 +47,10 @@ Every gap must be verified **on the page where it would actually live**. Contact
 
 Every claim carries a source URL and a checked-at time. If a figure is not published, write "not published". Never estimate revenue, staff or follower counts. A wrong claim on a cold call ends the call, so an honest "not published" is worth more than a confident guess.
 
+## Hard to find is the point
+
+These businesses rank badly by design of the brief. Before saying a business cannot be found, follow the tally-find-business skill (domain guessing, trade-word searches, directories, Facebook). "Could not find it" means the research is incomplete: leave it unscored for Zak to check. It is never a Pass reason. A business that exists but is hard to find has the `not_findable` gap.
+
 ## Verdict
 
 - **Go**: real, expensive and easy to market all pass, at least one verified gap, no rule-outs. Affordability can stay unverified.

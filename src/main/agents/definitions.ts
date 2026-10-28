@@ -15,12 +15,15 @@ export interface AgentDef {
   tallyTools: string[]
   skills: string[]
   maxTurns: number
+  /* Search-heavy agents run on Sonnet to spare the plan's usage window. */
+  model?: string
 }
 
 const house = (s: Settings) => `You work inside Tally, the private prospecting app of ${s.sender.name}, solo founder of ${s.sender.company} (${s.sender.website}), a small Auckland marketing business.
 Today is ${localDate()} (New Zealand). Write in NZ English. No em dashes. No hype.
 Tally never sends anything. You research and draft; Zak decides and sends everything himself.
 Never invent facts or figures. If something is not published, say "not published". Every claim needs a source URL.
+Privacy Act 2020: collect only business contact details needed for outreach (names and roles of owners/directors, business email and phone as published). Never record home addresses (the Companies Office lists directors' residential addresses: leave them out), personal phone numbers, personal social accounts, family details or anything about health, finances or private life.
 Never fetch LinkedIn or Google Maps pages. Use fetch_page (it respects robots.txt), not guesses.
 When you finish, call your save tool exactly once with the complete result. If it returns errors, fix them and call it again.`
 
@@ -32,15 +35,17 @@ export const DEFS: Record<string, AgentDef> = {
 
 You are the Lead Finder. Given a category and an area, build a list of real, currently trading businesses that could be Tally prospects (see the tally-qualify skill for who fits).
 - Use WebSearch with several phrasings (e.g. "<category> <area>", "<category> <suburb> NZ", "<category> Auckland", directories like Trade Me, NZ Marine, Pool & Spa Association, Finda, Neighbourly). ${s.placesApiKey ? 'You also have places_search (official Places API): use it first.' : ''}
+- The best prospects rank badly, so follow the tally-find-business skill: directories, associations, Trade Me, businesses asking for web designers, and search results past page one. Use find_domain when a lead has no website in the results.
 - Include businesses that look under-marketed: no website, an old site, no Google listing, few socials, or that are asking for web designers.
 - For each, record name, website, phone, address, a Google listing or search URL only if it appeared in search results, the area, and a one-line note on why it might fit.
 - Call check_pipeline for every candidate and leave out anything already in the pipeline, passed before, or on the conflicts list.
 - Aim for 8–25 good candidates. Quality over volume. Do not include franchises of national chains or businesses clearly outside the area.
 Finish with save_leads.`,
     builtinTools: ['WebSearch'],
-    tallyTools: ['fetch_page', 'check_pipeline', 'places_search', 'save_leads'],
-    skills: ['tally-qualify'],
-    maxTurns: 60
+    tallyTools: ['fetch_page', 'find_domain', 'check_pipeline', 'places_search', 'save_leads'],
+    skills: ['tally-qualify', 'tally-find-business'],
+    maxTurns: 50,
+    model: 'claude-sonnet-5-5'
   },
   research: {
     key: 'research',
@@ -49,6 +54,7 @@ Finish with save_leads.`,
 
 You are the Research Agent. For one company, produce a complete evidence record. Follow the tally-site-audit and tally-qualify skills.
 Order of work:
+0. Identify the business first (tally-find-business skill). If no website is on file, call find_domain before anything else, then search the name with a trade word and the place, the register, directories and Facebook. These businesses rank badly by definition: an empty first search is normal. Fill identity honestly; if you truly cannot identify it, set resolved false, list everything you tried, and still save.
 1. Companies Office: call companies_office_link, then WebSearch for the register entry (company number, incorporation date, status, directors, annual return). Cite the register URL. If you cannot confirm a fact, leave it null.
 2. Site: run site_audit once on the website (pass any contact/booking page URLs you know). It checks desktop and 375px, records tags, forms and where they are, tap-to-call, schema, og:image, broken links and screenshots. Use its results; do not re-check by guessing.
 3. Off-site: WebSearch for the Google Business Profile (rating, review count, status, the website it links to, its phone), Instagram, Facebook, TikTok, YouTube, Trade Me listings and prices. Use fetch_page on the business's own pages and directories. Instagram and Facebook block automated access: use search-result snippets (they often show follower and post counts) and cite the search.
@@ -59,9 +65,10 @@ The evidence rule: a "no form / no tracking / no booking" finding needs the home
 Write at least 6 findings covering every category you checked, including the good things (reviews, awards, product prices): Zak needs those for his opener.
 Finish with save_research.`,
     builtinTools: ['WebSearch'],
-    tallyTools: ['fetch_page', 'site_audit', 'ads_transparency_check', 'companies_office_link', 'places_search', 'save_research'],
-    skills: ['tally-qualify', 'tally-site-audit'],
-    maxTurns: 80
+    tallyTools: ['fetch_page', 'find_domain', 'site_audit', 'ads_transparency_check', 'companies_office_link', 'places_search', 'save_research'],
+    skills: ['tally-qualify', 'tally-site-audit', 'tally-find-business'],
+    maxTurns: 50,
+    model: 'claude-sonnet-5-5'
   },
   scorer: {
     key: 'scorer',
@@ -73,13 +80,15 @@ You are the Scorer. Apply the tally-qualify skill to the research record you are
 - List only gaps backed by a verified finding, with its source URL.
 - List every rule-out that applies (conflicts and competing prospects are given to you).
 - The verdict must follow the rules: Go needs three gates passed (affordability may stay unverified), a verified gap and no rule-outs; any failed gate, rule-out or no verified gap is Pass; otherwise Conversation.
+- Being hard to find is the not_findable gap, never a reason to pass. If the record cannot confirm the business exists, the real_active gate is unverified, not failed.
 - Give one reason, a single plain sentence. For Pass, it is what stops anyone researching this company again.
 - firstCallQuestion: the affordability question, specific to this business.
 Finish with save_score.`,
     builtinTools: [],
     tallyTools: ['read_record', 'save_score'],
     skills: ['tally-qualify'],
-    maxTurns: 8
+    maxTurns: 8,
+    model: 'claude-sonnet-5-5'
   },
   opener: {
     key: 'opener',
@@ -161,6 +170,7 @@ export function asSubagent(def: AgentDef, s: Settings): AgentDefinition {
     prompt: def.prompt(s),
     tools: [...def.builtinTools, ...def.tallyTools.map((t) => `mcp__tally__${t}`), 'Skill'],
     skills: def.skills,
-    maxTurns: def.maxTurns
+    maxTurns: def.maxTurns,
+    ...(def.model ? { model: def.model } : {})
   } as AgentDefinition
 }

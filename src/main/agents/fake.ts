@@ -20,6 +20,7 @@ const FIXTURES: Record<string, (prompt: string) => Record<string, unknown>> = {
     ]
   }),
   save_research: () => ({
+    identity: { resolved: true, website: site, howFound: 'Website on file' },
     legalName: 'E2E Marine Limited', phone: '09 555 0100', address: '1 Test Road, Silverdale', googleListingUrl: null,
     companiesOffice: { legalName: 'E2E Marine Limited', companyNumber: '1234567', incorporated: '2004-03-01', status: 'Registered', directors: ['Sam Example'], lastAnnualReturn: '2026-03-01', sourceUrl: 'https://app.companiesoffice.govt.nz/co/1234567' },
     findings: [

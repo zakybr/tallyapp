@@ -152,7 +152,7 @@ const single = (key: keyof typeof PROMPTS, label: string) => (p: JobPayload) => 
   const id = Number(p.companyId)
   const c = needsResearch(id)
   if (key === 'email') emailGate(c, p)
-  return { title: `${label}: ${c.name}`, companyId: id, work: (ctx: JobContext) => withAck(ctx, p, () => runDef(ctx, DEFS[key], PROMPTS[key](c), id)) }
+  return { title: `${label}: ${c.name}`, companyId: id, work: (ctx: JobContext) => withAck(ctx, p, async () => { await runDef(ctx, DEFS[key], PROMPTS[key](c), id) }) }
 }
 
 registerJob('opener', single('opener', 'Opener'))

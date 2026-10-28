@@ -85,3 +85,19 @@ describe('delete person scrubbing', () => {
     expect(JSON.stringify(d.debriefs)).not.toMatch(/al@albany|"Al |Hi Al"/)
   })
 })
+
+describe('privacy act', () => {
+  it('exports everything held on a person and finds retention candidates', () => {
+    const r = new Repo(openDatabase(join(mkdtempSync(join(tmpdir(), 'tally-test-')), 'p.db')))
+    const c = r.createCompany({ name: 'Old Pools Ltd' })
+    const p = r.upsertContact({ companyId: c.id, name: 'Kim Lee', email: 'kim@oldpools.nz', consentBasis: 'conspicuously_published' })
+    r.addActivity(c.id, 'call', 'Kim Lee said call back in spring')
+    const data = r.personData(p.id)!
+    expect(JSON.stringify(data)).toMatch(/kim@oldpools\.nz/)
+    expect((data.notes as unknown[]).length).toBe(1)
+    r.updateCompany(c.id, { stage: 'lost' })
+    r.db.prepare('UPDATE companies SET updated_at = ? WHERE id = ?').run('2024-01-01T00:00:00.000Z', c.id)
+    expect(r.retentionDue(12)).toEqual([{ companyId: c.id, contactIds: [p.id] }])
+    expect(r.retentionDue(1200)).toEqual([])
+  })
+})

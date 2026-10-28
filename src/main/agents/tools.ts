@@ -11,6 +11,7 @@ import { robotsAllows, rateLimit, USER_AGENT } from '../audit/robots'
 import { auditSite, adsTransparency } from '../audit/siteAudit'
 import { findDuplicate, normaliseDomain } from '@shared/rules'
 import type { JobContext } from './runner'
+import { findDomains } from './findDomain'
 
 type Result = { content: { type: 'text'; text: string }[]; isError?: boolean }
 const ok = (v: unknown): Result => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 1) }] })
@@ -19,12 +20,12 @@ const fail = (msg: string): Result => ({ content: [{ type: 'text', text: msg }],
 function stripHtml(html: string): { title: string; description: string; text: string; links: { href: string; text: string }[] } {
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? ''
   const description = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)/i)?.[1] ?? ''
-  const links = [...html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)].slice(0, 80)
+  const links = [...html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)].slice(0, 50)
     .map((m) => ({ href: m[1], text: m[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60) }))
   const text = html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, ' ').trim()
-  return { title, description, text: text.slice(0, 9000), links }
+  return { title, description, text: text.slice(0, 6000), links }
 }
 
 export function fetchPageTool(ctx: JobContext) {
@@ -105,6 +106,20 @@ export function companiesOfficeTool() {
       searchUrl: `https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURIComponent(name)}&type=entities`,
       tip: `WebSearch: "${name}" site:app.companiesoffice.govt.nz  or  "${name}" NZBN`
     })
+  )
+}
+
+export function findDomainTool(ctx: JobContext) {
+  return tool(
+    'find_domain',
+    'Find the website of a business that ranks badly on Google. Guesses domains from the name plus trade words (AOMAS + marine → aomasmarine.com), area and TLDs (.co.nz .nz .com .net.nz), keeps those that resolve in DNS and returns each homepage title and whether it mentions the name. Costs no search quota: use it early, always before concluding a business cannot be found.',
+    { name: z.string(), vertical: z.string().nullable().optional(), area: z.string().nullable().optional(), extraWords: z.array(z.string()).optional().describe('Other words seen with the name, e.g. "outboards", "engineering"') },
+    async ({ name, vertical, area, extraWords }) => {
+      ctx.log('tool', `find_domain ${name}${extraWords?.length ? ` + ${extraWords.join(', ')}` : ''}`)
+      const hits = await findDomains(name, vertical, area, extraWords ?? [], ctx.signal)
+      for (const h of hits.filter((x) => x.mentionsName)) ctx.log('finding', `Possible site: ${h.domain} · ${h.title ?? 'no title'}`)
+      return ok(hits.length ? hits : 'No guessed domain resolved. Try other spellings, the legal name, or directories.')
+    }
   )
 }
 
