@@ -4,7 +4,7 @@
 */
 import type {
   Company, CompanyDetail, CompanyInput, CompanyPatch, Conflict, Contact, ContactInput, Job, JobLogEntry,
-  GapType, JobKind, Outreach, Revenue, Settings, Suppression, TodaySummary
+  GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary
 } from './domain'
 
 export interface AppInfo {
@@ -45,6 +45,9 @@ export interface TallyApi {
 
   today(): Promise<TodaySummary>
 
+  listLeadRuns(): Promise<{ id: number; jobId: string; category: string; area: string; leads: LeadCandidate[]; createdAt: string }[]>
+  addLeads(leads: LeadCandidate[], vertical: string | null): Promise<number[]>
+
   startJob(kind: JobKind, payload: { companyId?: number; [k: string]: unknown }): Promise<Job>
   cancelJob(id: string): Promise<boolean>
   listJobs(): Promise<Job[]>
@@ -63,7 +66,7 @@ export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
   'upsertContact', 'deletePerson', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
-  'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath'
+  'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath'
 ]
 
 export interface TallyEvents {

@@ -4,11 +4,12 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { handle, emit } from './ipc'
 import { getRepo, dataDir } from './context'
 import { EXPORTABLE, toCsv } from './db/repo'
-import { localDate, monthlyRecurring, trailing12, gstWarning, proposalCapCheck } from '@shared/rules'
+import { findDuplicate, localDate, monthlyRecurring, trailing12, gstWarning, proposalCapCheck } from '@shared/rules'
 import type { TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
 import { start } from './agents/jobs'
+import './agents/research'
 import { cancelJob } from './agents/runner'
 import { claudeExecutable, skillsDir } from './agents/env'
 
@@ -92,6 +93,20 @@ export function registerDataHandlers(): void {
     return { file: pick.filePath }
   })
 
+  handle('listLeadRuns', async () => repo.listLeadRuns())
+  handle('addLeads', async (leads, vertical) => {
+    const ids: number[] = []
+    for (const l of leads) {
+      const dup = findDuplicate(l, repo.listCompanies())
+      if (dup) { ids.push(dup); continue }
+      ids.push(repo.createCompany({
+        name: l.name, website: l.website, phone: l.phone, address: l.address, googleListingUrl: l.googleListingUrl,
+        area: l.area, vertical, notes: l.note, source: 'Lead Finder'
+      }).id)
+    }
+    changed('companies')
+    return ids
+  })
   handle('startJob', async (kind, payload) => start(kind, payload))
   handle('cancelJob', async (id) => cancelJob(id))
   handle('listJobs', async () => {

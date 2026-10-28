@@ -180,5 +180,19 @@ CREATE TABLE job_logs (
 );
 CREATE INDEX job_logs_job ON job_logs(job_id);
 `
+  },
+  {
+    version: 2,
+    name: 'lead_runs',
+    sql: `
+CREATE TABLE lead_runs (
+  id INTEGER PRIMARY KEY,
+  job_id TEXT,
+  category TEXT NOT NULL,
+  area TEXT NOT NULL,
+  leads TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+`
   }
 ]

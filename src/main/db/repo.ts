@@ -7,7 +7,7 @@ import { MIGRATIONS } from './migrations'
 import {
   DEFAULT_SETTINGS, STAGES,
   type Activity, type ActivityKind, type Company, type CompanyDetail, type CompanyInput, type CompanyPatch,
-  type Conflict, type Contact, type GapType, type ContactInput, type Debrief, type InstagramBenchmarkRow, type Job, type JobLogEntry,
+  type Conflict, type Contact, type GapType, type LeadCandidate, type ContactInput, type Debrief, type InstagramBenchmarkRow, type Job, type JobLogEntry,
   type Outreach, type OutreachKind, type ResearchRecord, type Revenue, type Score, type Settings, type Stage, type Suppression
 } from '@shared/domain'
 import { normaliseDomain } from '@shared/rules'
@@ -420,6 +420,16 @@ export class Repo {
 
   jobLog(jobId: string): JobLogEntry[] {
     return (this.db.prepare('SELECT job_id, at, level, message, detail FROM job_logs WHERE job_id = ? ORDER BY id').all(jobId) as Row[]).map((r) => mapRow<JobLogEntry>(r))
+  }
+
+  /* ---------- lead finder runs ---------- */
+
+  saveLeadRun(jobId: string, category: string, area: string, leads: unknown[]): void {
+    this.db.prepare('INSERT INTO lead_runs (job_id, category, area, leads, created_at) VALUES (?, ?, ?, ?, ?)').run(jobId, category, area, JSON.stringify(leads), now())
+  }
+
+  listLeadRuns(limit = 20): { id: number; jobId: string; category: string; area: string; leads: LeadCandidate[]; createdAt: string }[] {
+    return (this.db.prepare('SELECT * FROM lead_runs ORDER BY id DESC LIMIT ?').all(limit) as Row[]).map((r) => mapRow(r, ['leads']))
   }
 
   /* ---------- export ---------- */

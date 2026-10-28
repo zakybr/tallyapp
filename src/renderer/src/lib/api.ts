@@ -46,3 +46,6 @@ export function domainOf(url: string | null | undefined): string {
   if (!url) return ''
   try { return new URL(/^https?:/.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, '') } catch { return url }
 }
+
+/* Screenshot paths live in the user data folder; the main process serves them. */
+export const fileUrl = (path: string) => `tally-file://local/?p=${encodeURIComponent(path)}`

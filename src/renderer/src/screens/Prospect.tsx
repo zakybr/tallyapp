@@ -1,14 +1,16 @@
 import { ArrowLeft, ExternalLink, Phone, Trash2 } from 'lucide-react'
-import { api, useData, domainOf } from '@/lib/api'
+import { api, useData, domainOf, ago } from '@/lib/api'
+import { VerdictCard, EvidenceList, Benchmark } from '@/components/prospect/Evidence'
+import { AgentButtons, LiveRun } from '@/components/prospect/AgentActions'
 import { navigate } from '@/lib/router'
 import { VerdictBadge, Section } from '@/components/ui'
 import { InlineField } from '@/components/InlineField'
 import { Contacts } from '@/components/prospect/Contacts'
 import { Timeline } from '@/components/prospect/Timeline'
-import { TallyLoader } from '@/components/Tally'
+import { TallyLoader, EmptyState } from '@/components/Tally'
 import { useToast } from '@/components/Toast'
 import { moveStage } from './Pipeline'
-import { STAGES, STAGE_LABEL, type CompanyPatch, type Stage } from '@shared/domain'
+import { STAGES, STAGE_LABEL, type CompanyDetail, type CompanyPatch, type Stage } from '@shared/domain'
 import { competingProspects } from '@shared/rules'
 
 export function Prospect({ id }: { id: number }) {
@@ -43,6 +45,7 @@ export function Prospect({ id }: { id: number }) {
             {c.verdictReason && <p className="mt-2 max-w-3xl text-[13.5px] text-ink">{c.verdictReason}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2" id="prospect-actions">
+            <AgentButtons companyId={id} hasResearch={d.research.length > 0} />
             <select
               aria-label="Stage"
               value={c.stage}
@@ -63,7 +66,7 @@ export function Prospect({ id }: { id: number }) {
 
       <div className="grid flex-1 grid-cols-[minmax(0,1fr)_340px] gap-8 px-8 py-6">
         <div className="flex min-w-0 flex-col gap-8" id="prospect-main">
-          <ProspectWork id={id} />
+          <ProspectWork d={d} />
         </div>
         <aside className="flex flex-col gap-7">
           <Section title="Next step">
@@ -100,8 +103,23 @@ export function Prospect({ id }: { id: number }) {
   )
 }
 
-/* Agent-produced sections (evidence, score, drafts) arrive in phases 4 and 5. */
-function ProspectWork({ id }: { id: number }) {
-  void id
+function ProspectWork({ d }: { d: CompanyDetail }) {
+  const id = d.company.id
+  return (
+    <>
+      <LiveRun companyId={id} />
+      {d.score && <Section title="Verdict" aside={<span className="text-[12px] text-ink-3">scored {ago(d.score.createdAt)}</span>}><VerdictCard score={d.score} /></Section>}
+      <Section title="Evidence" aside={<span className="text-[12px] text-ink-3">{d.research.filter((r) => r.verified).length} verified · {d.research.filter((r) => !r.verified).length} unverified</span>}>
+        {d.research.length ? <EvidenceList research={d.research} /> : <EmptyState title="Not researched yet" body="Research runs a live site audit, Companies Office and off-site checks, with a source for every claim." />}
+      </Section>
+      {d.benchmark.length > 0 && <Section title="Instagram benchmark"><Benchmark rows={d.benchmark} /></Section>}
+      <PrepareSections d={d} />
+    </>
+  )
+}
+
+/* Opener, call script, emails and audit PDF (phase 5). */
+function PrepareSections({ d }: { d: CompanyDetail }) {
+  void d
   return null
 }

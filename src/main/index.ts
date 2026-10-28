@@ -1,4 +1,6 @@
-import { app, BrowserWindow, shell, nativeTheme } from 'electron'
+import { app, BrowserWindow, shell, nativeTheme, protocol, net } from 'electron'
+import { pathToFileURL } from 'node:url'
+import { resolve, sep } from 'node:path'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
@@ -7,6 +9,17 @@ import { cancelAll } from './agents/runner'
 const here = fileURLToPath(new URL('.', import.meta.url))
 
 app.setName('Tally')
+
+/* tally-file://evidence/<path> serves screenshots from the user data folder only. */
+protocol.registerSchemesAsPrivileged([{ scheme: 'tally-file', privileges: { standard: true, secure: true, supportFetchAPI: true } }])
+function registerFileProtocol(): void {
+  const root = resolve(app.getPath('userData'))
+  protocol.handle('tally-file', (req) => {
+    const p = resolve(decodeURIComponent(new URL(req.url).searchParams.get('p') ?? ''))
+    if (!p.startsWith(root + sep)) return new Response('Forbidden', { status: 403 })
+    return net.fetch(pathToFileURL(p).href)
+  })
+}
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -51,6 +64,7 @@ function createWindow(): BrowserWindow {
 
 
 app.whenReady().then(() => {
+  registerFileProtocol()
   registerDataHandlers()
   createWindow()
   app.on('activate', () => {

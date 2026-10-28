@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2023", "module": "ESNext", "moduleResolution": "bundler", "strict": true,
     "esModuleInterop": true, "skipLibCheck": true, "resolveJsonModule": true, "composite": true,
-    "types": ["node"], "lib": ["ES2023"], "noUnusedLocals": true,
+    "types": ["node"], "lib": ["ES2023", "DOM"], "noUnusedLocals": true,
     "paths": { "@shared/*": ["./src/shared/*"] }
   },
   "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*", "tests/**/*", "vitest.config.ts", "playwright.config.ts"]
