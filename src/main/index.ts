@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell, nativeTheme } from 'electron'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { handle } from './ipc'
+import { registerDataHandlers } from './handlers'
 
 const here = fileURLToPath(new URL('.', import.meta.url))
 
@@ -48,16 +48,9 @@ function createWindow(): BrowserWindow {
   return win
 }
 
-function registerHandlers(): void {
-  handle('appInfo', async () => ({
-    version: app.getVersion(),
-    userDataPath: app.getPath('userData'),
-    platform: process.platform
-  }))
-}
 
 app.whenReady().then(() => {
-  registerHandlers()
+  registerDataHandlers()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

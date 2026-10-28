@@ -7,7 +7,11 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
 
 - [x] **1. Scaffold + theme** — electron-vite shell, tokens (`src/renderer/src/styles/index.css`), sidebar, empty screens,
       tally-mark icon (`npm run icon`), unsigned arm64 .dmg (`npm run dist:mac`) verified to launch (`node scripts/smoke-packaged.mjs`).
-- [ ] 2. Data
+- [x] **2. Data** — SQLite schema + forward-only migrations (`src/main/db/migrations.ts`), repo (`src/main/db/repo.ts`),
+      typed IPC (`src/shared/ipc.ts` ↔ `src/main/handlers.ts`), Pipeline board (drag to change stage, proposal-cap confirm) + table
+      with vertical/area/verdict/gap filters, Prospect detail (facts, next step, contacts with consent basis + Privacy Act delete,
+      notes, timeline), Settings (rate card, rules, region, verticals, conflicts, suppression, revenue, auth, sender, theme,
+      CSV export, full backup). API keys encrypted with safeStorage. 20 unit tests + 2 e2e tests. Code review: 10 findings, all fixed.
 - [ ] 3. Agent plumbing
 - [ ] 4. Research + score
 - [ ] 5. Prepare + contact
@@ -24,6 +28,10 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
 - **Module format**: package is ESM (`"type": "module"`); preload is emitted as CJS (`out/preload/index.cjs`) because sandboxed preloads must be CJS.
 - **better-sqlite3 v13** ships prebuilds; native rebuild warning about the space in "Tally App" is harmless.
 - **Signing**: no Developer ID certificate on this Mac (`security find-identity` shows 0), so builds are unsigned.
+
+- **Dates**: due dates are local NZ dates (`localDate()` in `src/shared/rules.ts`), never `toISOString().slice(0,10)`.
+- **Delete person** scrubs name/email/phone with boundary-aware regex across activities, findings, debriefs and drafts; the
+  suppression entry is kept so an opt-out survives deletion.
 
 ## Commands
 

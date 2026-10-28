@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ToastProvider } from './components/Toast'
 import { Sidebar } from './components/Sidebar'
 import { useRoute, navigate } from './lib/router'
 import { Today } from './screens/Today'
@@ -24,22 +25,24 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  if (route.name === 'call') return <CallMode />
+  if (route.name === 'call') return <ToastProvider><CallMode /></ToastProvider>
 
   return (
+    <ToastProvider>
     <div className="flex h-full">
       <Sidebar current={route.name} runningJobs={0} onPalette={() => setPalette(true)} />
       <main className="relative my-2 mr-2 flex-1 overflow-hidden rounded-[10px] bg-paper shadow-[var(--shadow-sheet)]">
         <div className="drag absolute inset-x-0 top-0 h-6" />
-        <div key={route.name} className="scroll-quiet h-full overflow-y-auto">
+        <div key={route.name === 'prospect' ? `p${route.id}` : route.name} className="scroll-quiet h-full overflow-y-auto">
           {route.name === 'today' && <Today />}
           {route.name === 'find' && <Find />}
           {route.name === 'pipeline' && <Pipeline />}
-          {route.name === 'prospect' && <Prospect />}
+          {route.name === 'prospect' && <Prospect id={route.id} />}
           {route.name === 'agents' && <Agents />}
           {route.name === 'settings' && <Settings />}
         </div>
       </main>
     </div>
+    </ToastProvider>
   )
 }

@@ -7,14 +7,13 @@ directories:
 files:
   - out/**
   - package.json
-  - .claude/skills/**
 asarUnpack:
   - node_modules/better-sqlite3/**
   - node_modules/@anthropic-ai/claude-agent-sdk*/**
   - node_modules/playwright-core/**
 extraResources:
   - from: .claude/skills
-    to: skills
+    to: agent-home/.claude/skills
 publish: null
 mac:
   icon: build/icon.icns
