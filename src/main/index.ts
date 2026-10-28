@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell, nativeTheme } from 'electron'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
+import { cancelAll } from './agents/runner'
 
 const here = fileURLToPath(new URL('.', import.meta.url))
 
@@ -56,6 +57,8 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
+app.on('before-quit', () => cancelAll())
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

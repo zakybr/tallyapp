@@ -8,6 +8,9 @@ import { localDate, monthlyRecurring, trailing12, gstWarning, proposalCapCheck }
 import type { TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
+import { start } from './agents/jobs'
+import { cancelJob } from './agents/runner'
+import { claudeExecutable, skillsDir } from './agents/env'
 
 const mainWindow = () => (BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0])!
 const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
@@ -89,5 +92,14 @@ export function registerDataHandlers(): void {
     return { file: pick.filePath }
   })
 
+  handle('startJob', async (kind, payload) => start(kind, payload))
+  handle('cancelJob', async (id) => cancelJob(id))
+  handle('listJobs', async () => {
+    const running = runningJobs()
+    const ids = new Set(running.map((j) => j.id))
+    return [...running, ...repo.listJobs().filter((j) => !ids.has(j.id))]
+  })
+  handle('jobLog', async (id) => repo.jobLog(id))
+  handle('agentInfo', async () => ({ skillsDir: skillsDir(), executable: claudeExecutable() ?? null, authMode: repo.getSettings().authMode }))
   handle('revealPath', async (p) => { shell.showItemInFolder(p) })
 }

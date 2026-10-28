@@ -12,7 +12,11 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
       with vertical/area/verdict/gap filters, Prospect detail (facts, next step, contacts with consent basis + Privacy Act delete,
       notes, timeline), Settings (rate card, rules, region, verticals, conflicts, suppression, revenue, auth, sender, theme,
       CSV export, full backup). API keys encrypted with safeStorage. 20 unit tests + 2 e2e tests. Code review: 10 findings, all fixed.
-- [ ] 3. Agent plumbing
+- [x] **3. Agent plumbing** — `src/main/agents/runner.ts` (jobs, AbortController cancellation, streaming log, usage from
+      `result.modelUsage`), `env.ts` (subscription auth: strips ANTHROPIC_API_KEY so the bundled CLI uses the Claude Code
+      login; optional API key mode), `jobs.ts` (job registry + Connection check), Agents screen (history, run log, 7-day usage,
+      cancel / cancel all). Verified: check job ran on claude-opus-5-5 "via Claude Code login", loaded all 5 skills, 2.6k tokens;
+      cancellation leaves no orphan CLI process. Code review for phases 3+4 is done together at the end of phase 4.
 - [ ] 4. Research + score
 - [ ] 5. Prepare + contact
 - [ ] 6. Polish + package
@@ -33,6 +37,12 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
 - **Delete person** scrubs name/email/phone with boundary-aware regex across activities, findings, debriefs and drafts; the
   suppression entry is kept so an opt-out survives deletion.
 
+- **Agent isolation**: `settingSources: ['project']` with `cwd = agentHome()` — loads only this repo's `.claude/skills`, never
+  the user's global plugins/hooks. `permissionMode: 'dontAsk'` + an explicit `tools`/`allowedTools` list per agent.
+  `persistSession: false` so runs don't clutter `~/.claude/projects`.
+- **Skills location**: dev = repo `.claude/skills`; packaged = `~/Library/Application Support/Tally/agent-home/.claude/skills`,
+  seeded once from the bundle and never overwritten (edits survive updates).
+
 ## Commands
 
     npm run dev        # hot-reload app
@@ -41,3 +51,4 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
     npm test           # vitest unit tests
     npm run e2e        # Playwright Electron smoke test
     npm run dist:mac   # release/Tally-<v>-arm64.dmg
+    node scripts/run-job.mjs check   # run an agent job headlessly and stream its log (needs `npm run build`)

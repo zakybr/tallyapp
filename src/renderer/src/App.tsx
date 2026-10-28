@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ToastProvider } from './components/Toast'
+import { useJobs } from './lib/jobs'
 import { Sidebar } from './components/Sidebar'
 import { useRoute, navigate } from './lib/router'
 import { Today } from './screens/Today'
@@ -13,6 +14,7 @@ import { Settings } from './screens/Settings'
 export function App() {
   const route = useRoute()
   const [, setPalette] = useState(false)
+  const running = useJobs().filter((j) => j.status === 'running').length
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -30,15 +32,15 @@ export function App() {
   return (
     <ToastProvider>
     <div className="flex h-full">
-      <Sidebar current={route.name} runningJobs={0} onPalette={() => setPalette(true)} />
+      <Sidebar current={route.name} runningJobs={running} onPalette={() => setPalette(true)} />
       <main className="relative my-2 mr-2 flex-1 overflow-hidden rounded-[10px] bg-paper shadow-[var(--shadow-sheet)]">
         <div className="drag absolute inset-x-0 top-0 h-6" />
-        <div key={route.name === 'prospect' ? `p${route.id}` : route.name} className="scroll-quiet h-full overflow-y-auto">
+        <div key={route.name === 'prospect' ? `p${route.id}` : route.name === 'agents' ? 'agents' : route.name} className="scroll-quiet h-full overflow-y-auto">
           {route.name === 'today' && <Today />}
           {route.name === 'find' && <Find />}
           {route.name === 'pipeline' && <Pipeline />}
           {route.name === 'prospect' && <Prospect id={route.id} />}
-          {route.name === 'agents' && <Agents />}
+          {route.name === 'agents' && <Agents jobId={route.jobId} />}
           {route.name === 'settings' && <Settings />}
         </div>
       </main>

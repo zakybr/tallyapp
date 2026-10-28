@@ -287,7 +287,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export type JobKind =
   | 'lead_finder' | 'research' | 'score' | 'opener' | 'call_script'
-  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'pipeline'
+  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'pipeline' | 'check'
 
 export const JOB_LABEL: Record<JobKind, string> = {
   lead_finder: 'Lead Finder',
@@ -298,7 +298,8 @@ export const JOB_LABEL: Record<JobKind, string> = {
   email_sequence: 'Email Drafter',
   audit_pdf: 'Audit Builder',
   debrief: 'Debrief Agent',
-  pipeline: 'Orchestrator'
+  pipeline: 'Orchestrator',
+  check: 'Connection check'
 }
 
 export type JobStatus = 'running' | 'done' | 'failed' | 'cancelled'
