@@ -74,14 +74,39 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
   Electron e2e suite (under `xvfb-run`) and an unpacked Linux package were all verified there. Agents were not run for real
   there, and no live sites were audited.
 
-## Next (on the Mac)
+## Real-case acceptance (29 Oct 2026, on the Mac)
 
-1. `git pull`, `npm ci`, `npm run build`, `npm test`, `npm run e2e`.
-2. Phase 4 acceptance: research **AOMAS, Orewa** and **White Pointer Boats** for real (`node scripts/real-case.mjs` or the UI),
-   check the evidence records, then Prepare both and read every draft and the audit PDF.
-3. `npm run dist:mac`, open `release/Tally-0.1.0-arm64.dmg`, drag to Applications. It is unsigned (no Developer ID on this
-   Mac): the first time, right-click Tally in Applications → Open → Open. If macOS still blocks it, System Settings →
-   Privacy & Security → "Open Anyway". Or run `xattr -dr com.apple.quarantine /Applications/Tally.app` once.
+- **White Pointer Boats** → Conversation. Verified gaps: contact form says "Email delivery requires configuration", no
+  tap-to-call on mobile, nothing measured (no GA4/GTM/pixel), no Google ads, no schema/og:image. Unverified: Companies Office,
+  Google profile, Meta ads. Note: they are in **Gisborne**, outside the Auckland regions; region is not a gate.
+- **AOMAS** → Conversation, found at aomasmarine.com ("AOMAS Custom Boats") by `find_domain` after the first run wrongly
+  passed it as "not found". $230k launch promo, email-only enquiry path, nothing measured, no ads. Register entry unverified.
+- Prepare ran on both: opener, call script, 3 emails, one-page audit PDF. All drafts lint-clean.
+- Packaged `release/Tally-0.1.0-arm64.dmg`: bundle name Tally, icon = tally mark, agent check passes inside the .app.
+  Not yet exercised from the packaged app: a Playwright site audit (needs `npx playwright install chromium` once on the Mac).
+
+## Decisions (29 Oct 2026)
+
+- **Token leak**: with a Claude subscription login, the CLI attached the account's claude.ai connectors to every agent call
+  (~130k tokens/turn). `strictMcpConfig: true` + `ENABLE_CLAUDEAI_MCP_SERVERS=false` cut an opener from 518k tokens to 17k.
+  Skills are also inlined from `.claude/skills/*/SKILL.md` into the system prompt (`src/main/agents/skills.ts`) rather than
+  loaded through the Skill tool. Files stay the editable source of truth and are re-read every run.
+- **Search agents** (research, lead finder, scorer) default to Sonnet 5.5; research runs one at a time. Settings → Model overrides.
+- **Hard-to-find businesses**: `find_domain` (DNS guesses of name + trade word + TLD), `tally-find-business` skill. A business
+  the research cannot identify is left unscored with a next step, never passed (also enforced in save_score for the orchestrator).
+- **Watchdog**: an agent silent for 12 minutes is stopped with a clear error; tool calls over 15s are timed in the run log.
+- **Audit PDF** always fits one A4 page (auto-scale; if still too long the save tool tells the agent to shorten).
+- **Privacy Act 2020**: per-contact access export (IPP 6), retention sweep on start (default 12 months after Pass/Lost, IPP 9),
+  company delete removes screenshots and PDFs, person delete scrubs run logs too, agents keep director names only, Settings
+  → Privacy explains storage and the Anthropic processing (IPP 12).
+- **Companies Office** blocks bots in robots.txt, so register facts come from search results and stay unverified when not
+  found. Proposed fix: the free official NZBN API (needs a key), not yet added.
+
+## Next
+
+1. Optional NZBN API key in Settings for Companies Office facts (free; needs Zak's OK and a key).
+2. Run a site audit from the installed .app once to confirm Playwright works outside dev.
+3. Install: open the .dmg, drag Tally to Applications, then right-click → Open the first time (unsigned).
 
 ## Commands
 

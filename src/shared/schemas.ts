@@ -104,9 +104,9 @@ const EmailSchema = z.object({ subject: z.string().min(2), body: z.string().min(
 export const EmailSequenceSchema = z.object({ first: EmailSchema, followUp: EmailSchema, breakup: EmailSchema })
 
 export const AuditContentSchema = z.object({
-  summary: z.string().min(20),
-  findings: z.array(z.object({ headline: z.string(), body: z.string(), sourceUrl: nullableUrl, checkedAt: z.string().nullable(), screenshotPath: z.string().nullable() })).min(1).max(6),
-  fixes: z.array(z.object({ fix: z.string(), diy: z.boolean() })).min(1).max(5)
+  summary: z.string().min(20).max(420).describe('Two sentences'),
+  findings: z.array(z.object({ headline: z.string().max(90), body: z.string().max(340).describe('Two or three short sentences'), sourceUrl: nullableUrl, checkedAt: z.string().nullable(), screenshotPath: z.string().nullable() })).min(1).max(6),
+  fixes: z.array(z.object({ fix: z.string().max(240), diy: z.boolean() })).min(1).max(5)
 })
 
 export const DebriefSchema = z.object({

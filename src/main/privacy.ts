@@ -29,6 +29,7 @@ export function retentionSweep(repo: Repo): { companies: number; people: number 
   for (const { companyId, contactIds } of due) {
     for (const id of contactIds) { repo.deletePerson(id); people++ }
     rmSync(join(dataDir(), 'evidence', String(companyId)), { recursive: true, force: true })
+    repo.db.prepare('UPDATE research_records SET screenshot_path = NULL WHERE company_id = ?').run(companyId)
     repo.addActivity(companyId, 'note', `Retention: contact details deleted after ${months} months closed (Privacy Act IPP 9).`)
   }
   return { companies: due.length, people }

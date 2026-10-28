@@ -54,5 +54,6 @@ export function agentEnv(settings: Settings): Record<string, string> {
     env.ANTHROPIC_API_KEY = settings.apiKey
   }
   env.CLAUDE_AGENT_SDK_CLIENT_APP = 'tally-desktop'
+  env.ENABLE_CLAUDEAI_MCP_SERVERS = 'false'
   return env
 }

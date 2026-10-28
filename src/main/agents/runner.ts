@@ -11,6 +11,7 @@ import { emit } from '../ipc'
 import { realSettings } from '../secrets'
 import { live } from './registry'
 import { agentEnv, agentHome, claudeExecutable } from './env'
+import { skillText } from './skills'
 import { fakeRun } from './fake'
 import type { Job, JobKind, JobLogEntry, LogLevel } from '@shared/domain'
 
@@ -40,6 +41,8 @@ export interface AgentRun<T> {
 }
 
 class Cancelled extends Error {}
+
+const STALL_MS = 12 * 60_000
 
 const now = () => new Date().toISOString()
 const short = (s: string, n = 220) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
@@ -113,19 +116,21 @@ async function runAgent<T>(job: Job, abort: AbortController, log: JobContext['lo
   const settings = realSettings(getRepo())
   const mcpToolNames = (spec.tools ?? []).map((t) => `mcp__tally__${t.name}`)
   const mcp = spec.tools?.length ? createSdkMcpServer({ name: 'tally', version: '1.0.0', tools: spec.tools }) : undefined
-  const builtins = [...spec.builtinTools, ...(spec.skills?.length ? ['Skill'] : []), ...(spec.agents ? ['Agent'] : [])]
+  const builtins = [...spec.builtinTools, ...(spec.agents ? ['Agent'] : [])]
 
   const q = query({
     prompt: spec.prompt,
     options: {
       cwd: agentHome(),
       settingSources: ['project'],
-      skills: spec.skills ?? [],
-      systemPrompt: spec.systemPrompt,
+      skills: [],
+      systemPrompt: spec.systemPrompt + skillText(spec.skills),
       tools: builtins,
       allowedTools: [...builtins, ...mcpToolNames],
       permissionMode: 'dontAsk',
       mcpServers: mcp ? { tally: mcp } : undefined,
+      // Only Tally's own tools: never the account's claude.ai connectors, which add tens of thousands of tokens per call.
+      strictMcpConfig: true,
       agents: spec.agents,
       outputFormat: spec.schema ? { type: 'json_schema', schema: z.toJSONSchema(spec.schema, { target: 'draft-7' }) as Record<string, unknown> } : undefined,
       maxTurns: spec.maxTurns ?? 40,
@@ -139,17 +144,31 @@ async function runAgent<T>(job: Job, abort: AbortController, log: JobContext['lo
 
   let text = ''
   let structured: unknown
+  // Watchdog: a run that produces no message for STALL_MS is stuck (seen once
+  // when the in-process tool server dropped). Abort it with a clear reason
+  // instead of hanging forever. A long site_audit sends no messages, so the
+  // limit is generous.
+  let last = Date.now()
+  const toolStarts = new Map<string, { name: string; at: number }>()
+  let stalled = false
+  const watchdog = setInterval(() => {
+    if (Date.now() - last > STALL_MS) { stalled = true; log('error', `${spec.name} sent nothing for ${Math.round(STALL_MS / 60000)} minutes, so it was stopped.`); void q.interrupt().catch(() => {}); abort.abort() }
+  }, 15_000)
   try {
     for await (const m of q as AsyncIterable<SDKMessage>) {
+      last = Date.now()
       if (abort.signal.aborted) throw new Cancelled()
-      const r = handleMessage(job, log, spec.name, m)
+      const r = handleMessage(job, log, spec.name, m, toolStarts)
       if (r?.text) text = r.text
       if (r && 'structured' in r) structured = r.structured
       if (r?.error) throw new Error(r.error)
     }
   } catch (e) {
+    if (stalled) throw new Error(`${spec.name} stalled and was stopped. Nothing was saved; run it again.`)
     if (abort.signal.aborted) throw new Cancelled()
     throw e
+  } finally {
+    clearInterval(watchdog)
   }
 
   if (!spec.schema) return { output: undefined as T, text }
@@ -167,8 +186,8 @@ function tryJson(s: string): unknown {
   try { return JSON.parse(m[0]) } catch { return undefined }
 }
 
-/* Turns SDK messages into run-log lines and usage. */
-function handleMessage(job: Job, log: JobContext['log'], agent: string, m: SDKMessage): { text?: string; structured?: unknown; error?: string } | void {
+/* Turns SDK messages into run-log lines and usage. Slow tool calls (over 15s) are timed from tool_use to tool_result. */
+function handleMessage(job: Job, log: JobContext['log'], agent: string, m: SDKMessage, toolStarts: Map<string, { name: string; at: number }>): { text?: string; structured?: unknown; error?: string } | void {
   switch (m.type) {
     case 'system':
       if (m.subtype === 'init') {
@@ -183,6 +202,7 @@ function handleMessage(job: Job, log: JobContext['log'], agent: string, m: SDKMe
         if (block.type === 'tool_use') {
           const input = block.input as Record<string, unknown>
           const name = block.name.replace(/^mcp__tally__/, '')
+          toolStarts.set(block.id, { name, at: Date.now() })
           const url = (input.url ?? input.query ?? input.pages ?? input.name ?? input.handle) as unknown
           const level: LogLevel = name === 'WebFetch' || name === 'site_audit' || name === 'fetch_page' ? 'page' : 'tool'
           log(level, `${sub}${name}${url ? ` ${short(typeof url === 'string' ? url : JSON.stringify(url), 160)}` : ''}`, short(JSON.stringify(input), 1500))
@@ -193,7 +213,9 @@ function handleMessage(job: Job, log: JobContext['log'], agent: string, m: SDKMe
     case 'user': {
       const content = (m.message as { content?: unknown }).content
       if (Array.isArray(content)) {
-        for (const b of content as { type: string; is_error?: boolean; content?: unknown }[]) {
+        for (const b of content as { type: string; tool_use_id?: string; is_error?: boolean; content?: unknown }[]) {
+          const st = b.tool_use_id ? toolStarts.get(b.tool_use_id) : undefined
+          if (st) { toolStarts.delete(b.tool_use_id!); const ms = Date.now() - st.at; if (ms > 15_000) log('tool', `${st.name} took ${Math.round(ms / 1000)}s`) }
           if (b.type === 'tool_result' && b.is_error) log('error', `Tool error: ${short(typeof b.content === 'string' ? b.content : JSON.stringify(b.content), 300)}`)
         }
       }
@@ -202,7 +224,8 @@ function handleMessage(job: Job, log: JobContext['log'], agent: string, m: SDKMe
     case 'result': {
       job.turns += m.num_turns
       job.costUsd = (job.costUsd ?? 0) + (m.total_cost_usd ?? 0)
-      for (const u of Object.values(m.modelUsage ?? {})) {
+      for (const [model, u] of Object.entries(m.modelUsage ?? {})) {
+        log('info', `${agent} usage · ${model}: ${u.inputTokens} in, ${u.cacheReadInputTokens} cache read, ${u.cacheCreationInputTokens} cache write, ${u.outputTokens} out`)
         job.inputTokens += u.inputTokens + u.cacheReadInputTokens + u.cacheCreationInputTokens
         job.outputTokens += u.outputTokens
       }

@@ -5,6 +5,7 @@
 */
 import type { AgentDefinition } from '@anthropic-ai/claude-agent-sdk'
 import type { Settings } from '@shared/domain'
+import { skillText } from './skills'
 import { OPT_OUT_LINE, localDate } from '@shared/rules'
 
 export interface AgentDef {
@@ -167,9 +168,9 @@ Stop after the scorer if the verdict is pass. Tell the email subagent who to add
 export function asSubagent(def: AgentDef, s: Settings): AgentDefinition {
   return {
     description: def.description,
-    prompt: def.prompt(s),
-    tools: [...def.builtinTools, ...def.tallyTools.map((t) => `mcp__tally__${t}`), 'Skill'],
-    skills: def.skills,
+    prompt: def.prompt(s) + skillText(def.skills),
+    tools: [...def.builtinTools, ...def.tallyTools.map((t) => `mcp__tally__${t}`)],
+    skills: [],
     maxTurns: def.maxTurns,
     ...(def.model ? { model: def.model } : {})
   } as AgentDefinition

@@ -63,13 +63,17 @@ async function slot<T>(ctx: JobContext, fn: () => Promise<T>): Promise<T> {
   try { return await fn() } finally { active--; waiting.shift()?.() }
 }
 
+/* Companies whose last research could not identify them. Never scored: hard to find is a gap, not a Pass. */
+const unresolved = new Set<number>()
+
 function researchSaveTool(ctx: JobContext, companyId: number, done: Set<string>) {
   return saveTool('save_research', 'Save the complete evidence record for this company. Call once at the end.', ResearchSchema, (r) => {
     const repo = getRepo()
     const records = applyEvidenceRule(r.findings, evidenceDir(companyId))
     repo.db.transaction(() => {
       repo.replaceResearch(companyId, ctx.jobId, records)
-      if (r.companiesOffice) {
+      // Only a register entry with real data becomes a finding; the agent writes its own note when it found nothing.
+      if (r.companiesOffice && (r.companiesOffice.companyNumber || r.companiesOffice.legalName)) {
         const co = r.companiesOffice
         repo.addResearch(companyId, {
           category: 'companies_office', gapType: null, sourceUrl: co.sourceUrl, pagesChecked: co.sourceUrl ? [co.sourceUrl] : [], screenshotPath: null,
@@ -87,10 +91,12 @@ function researchSaveTool(ctx: JobContext, companyId: number, done: Set<string>)
       const at = new Date().toISOString()
       repo.replaceBenchmark(companyId, r.benchmark.map((b) => ({ ...b, checkedAt: at })))
       const existing = repo.listContacts(companyId)
-      for (const c of r.contacts) {
+      // Named contacts first, so a shared inbox attaches to the person rather than an anonymous row.
+      for (const c of [...r.contacts].sort((a, b) => Number(!!b.name) - Number(!!a.name))) {
         if (!c.email && !c.name && !c.phone) continue
-        if (existing.some((e) => (c.email && e.email === c.email.toLowerCase()) || (!c.email && c.name && e.name === c.name))) continue
-        repo.upsertContact({ companyId, ...c, email: c.email?.toLowerCase() ?? null })
+        const email = c.email?.toLowerCase() ?? null
+        if (existing.some((e) => (email && e.email === email) || (!email && c.name && e.name === c.name))) continue
+        existing.push(repo.upsertContact({ companyId, ...c, email }))
       }
       const co = repo.getCompany(companyId)!
       repo.updateCompany(companyId, {
@@ -102,8 +108,11 @@ function researchSaveTool(ctx: JobContext, companyId: number, done: Set<string>)
       const gaps = records.filter((x) => x.gapType && x.verified).length
       const unverified = records.filter((x) => !x.verified).length
       repo.addActivity(companyId, 'research', `Researched: ${records.length} findings, ${gaps} verified gaps, ${unverified} unverified`)
-      if (!r.identity.resolved) {
-        repo.updateCompany(companyId, { nextStep: 'Confirm the exact business name or website, then re-research', verdict: null, verdictReason: `Could not identify the business. Tried: ${r.identity.howFound}` })
+      if (r.identity.resolved) unresolved.delete(companyId)
+      else {
+        unresolved.add(companyId)
+        const stage = repo.getCompany(companyId)!.stage
+        repo.updateCompany(companyId, { ...(['discovered', 'go', 'conversation', 'pass'].includes(stage) ? { stage: 'researched' as Stage } : {}), nextStep: 'Confirm the exact business name or website, then re-research', verdict: null, verdictReason: `Could not identify the business. Tried: ${r.identity.howFound}` })
         repo.addActivity(companyId, 'note', 'Research could not identify the business, so it was not scored. Being hard to find is a gap, not a reason to pass.')
       }
     })()
@@ -129,6 +138,7 @@ function knownRuleOuts(c: Company): { type: RuleOut; reason: string }[] {
 
 function scoreSaveTool(ctx: JobContext, companyId: number, done: Set<string>) {
   return saveTool('save_score', 'Save the verdict for this company. Call once.', ScoreSchema, (sc) => {
+    if (unresolved.has(companyId)) throw new Error('The research could not identify this business, so it must not be scored. Stop here; Zak will confirm the name.')
     const repo = getRepo()
     const c = repo.getCompany(companyId)!
     const ruleOuts = [...sc.ruleOuts]

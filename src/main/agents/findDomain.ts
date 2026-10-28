@@ -47,21 +47,25 @@ export async function findDomains(name: string, vertical?: string | null, area?:
     const r = await Promise.all(batch.map((d) => lookup(d).then(() => d).catch(() => null)))
     resolved.push(...(r.filter(Boolean) as string[]))
   }
-  const key = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter((w) => !STOP.has(w))[0] ?? ''
+  // Every distinctive word of the name must appear, not just the first ("white" alone matches half the web).
+  const keys = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter((w) => w.length > 1 && !STOP.has(w))
   const hits: DomainHit[] = []
-  for (const d of resolved.slice(0, 12)) {
+  const queue = resolved.slice(0, 12)
+  const worker = async () => { for (let d = queue.shift(); d; d = queue.shift()) await check(d) }
+  const check = async (d: string) => {
     const url = `https://${d}/`
     const ok = await robotsAllows(url)
-    if (!ok.allowed) { hits.push({ domain: d, finalUrl: null, status: null, title: null, mentionsName: false, note: ok.reason }); continue }
+    if (!ok.allowed) { hits.push({ domain: d, finalUrl: null, status: null, title: null, mentionsName: false, note: ok.reason }); return }
     try {
       const res = await fetch(url, { headers: { 'user-agent': USER_AGENT }, redirect: 'follow', signal: AbortSignal.timeout(12_000) })
       const html = (await res.text()).slice(0, 200_000)
       const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, ' ').trim() ?? null
       const forSale = /domain (is )?for sale|buy this domain|parked/i.test(html)
-      hits.push({ domain: d, finalUrl: res.url, status: res.status, title, mentionsName: !!key && html.toLowerCase().includes(key), note: forSale ? 'looks parked or for sale' : undefined })
+      hits.push({ domain: d, finalUrl: res.url, status: res.status, title, mentionsName: keys.length > 0 && keys.every((k) => html.toLowerCase().includes(k)), note: forSale ? 'looks parked or for sale' : undefined })
     } catch (e) {
       hits.push({ domain: d, finalUrl: null, status: null, title: null, mentionsName: false, note: `resolves but no web response (${e instanceof Error ? e.message : e})` })
     }
   }
+  await Promise.all([worker(), worker(), worker(), worker()])
   return hits
 }

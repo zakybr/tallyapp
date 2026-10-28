@@ -177,9 +177,7 @@ export class Repo {
     if (!c) return { removedDrafts: 0 }
     return this.db.transaction(() => {
       const drafts = this.db.prepare('DELETE FROM outreach WHERE contact_id = ?').run(contactId).changes
-      const patterns = [c.email, c.phone, c.name]
-        .filter((v): v is string => !!v && v.trim().length > 1)
-        .map((v) => new RegExp(`(?<![\\w@.])${v.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w@])`, 'gi'))
+      const patterns = personPatterns(c)
       const scrub = (s: string) => patterns.reduce((out, re) => out.replace(re, '[removed]'), s)
       for (const a of this.listActivities(c.companyId)) {
         const next = scrub(a.summary)
@@ -219,8 +217,9 @@ export class Repo {
     const c = this.getContact(contactId)
     if (!c) return null
     const company = this.getCompany(c.companyId)
-    const needles = [c.email, c.name, c.phone].filter((v): v is string => !!v && v.trim().length > 1).map((v) => v.toLowerCase())
-    const mentions = (s: string | null) => !!s && needles.some((n) => s.toLowerCase().includes(n))
+    // Whole-word matches only: an access request must not hand over notes about other people.
+    const patterns = personPatterns(c)
+    const mentions = (s: string | null) => !!s && patterns.some((re) => { re.lastIndex = 0; return re.test(s) })
     return {
       exportedAt: now(),
       heldBy: 'Tally Marketing Limited, on one computer (local database, not shared).',
@@ -498,6 +497,13 @@ export const EXPORTABLE = [
   'companies', 'contacts', 'research_records', 'benchmarks', 'scores', 'outreach', 'activities', 'debriefs',
   'suppression_list', 'conflicts', 'revenue', 'jobs'
 ]
+
+/* Boundary-aware patterns for a person's email, phone and name. */
+function personPatterns(c: Pick<Contact, 'email' | 'phone' | 'name'>): RegExp[] {
+  return [c.email, c.phone, c.name]
+    .filter((v): v is string => !!v && v.trim().length > 1)
+    .map((v) => new RegExp(`(?<![\\w@.])${v.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w@])`, 'gi'))
+}
 
 function sqlValue(v: unknown): unknown {
   if (typeof v === 'boolean') return v ? 1 : 0
