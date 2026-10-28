@@ -323,6 +323,11 @@ export class Repo {
     return (this.db.prepare('SELECT * FROM activities WHERE company_id = ? ORDER BY at DESC, id DESC').all(companyId) as Row[]).map((r) => mapRow<Activity>(r))
   }
 
+  /* An opt-out is recorded on the timeline, and it outlives any contact deletion. */
+  hasOptedOut(companyId: number): boolean {
+    return !!this.db.prepare("SELECT 1 FROM activities WHERE company_id = ? AND kind = 'opt_out' LIMIT 1").get(companyId)
+  }
+
   addActivity(companyId: number, kind: ActivityKind, summary: string, outcome: string | null = null): void {
     this.db.prepare('INSERT INTO activities (company_id, kind, summary, outcome, at) VALUES (?, ?, ?, ?, ?)').run(companyId, kind, summary, outcome, now())
   }

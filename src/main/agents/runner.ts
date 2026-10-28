@@ -11,6 +11,7 @@ import { emit } from '../ipc'
 import { realSettings } from '../secrets'
 import { live } from './registry'
 import { agentEnv, agentHome, claudeExecutable } from './env'
+import { fakeRun } from './fake'
 import type { Job, JobKind, JobLogEntry, LogLevel } from '@shared/domain'
 
 export interface JobContext {
@@ -106,6 +107,7 @@ export function cancelAll(): void {
 
 async function runAgent<T>(job: Job, abort: AbortController, log: JobContext['log'], spec: AgentRun<T>): Promise<{ output: T; text: string }> {
   if (abort.signal.aborted) throw new Cancelled()
+  if (process.env.TALLY_FAKE_AGENTS === '1') return fakeRun(spec, log)
   const settings = realSettings(getRepo())
   const mcpToolNames = (spec.tools ?? []).map((t) => `mcp__tally__${t.name}`)
   const mcp = spec.tools?.length ? createSdkMcpServer({ name: 'tally', version: '1.0.0', tools: spec.tools }) : undefined

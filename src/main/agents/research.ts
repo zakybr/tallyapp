@@ -2,18 +2,18 @@
   Find → Research → Score. Lead Finder, Research Agent, Scorer, and the
   orchestrator pipeline that chains them.
 */
-import { existsSync } from 'node:fs'
 import { getRepo, evidenceDir } from '../context'
 import { emit } from '../ipc'
 import { realSettings } from '../secrets'
 import { registerJob } from './jobs'
+import { applyEvidenceRule } from './evidence'
 import { DEFS, ORCHESTRATOR_PROMPT, asSubagent, type AgentDef } from './definitions'
 import { adsTool, companiesOfficeTool, fetchPageTool, pipelineCheckTool, placesTool, saveTool, siteAuditTool } from './tools'
 import type { JobContext } from './runner'
 import { tool } from '@anthropic-ai/claude-agent-sdk'
-import { LeadsSchema, ResearchSchema, ScoreSchema, type ResearchResult } from '@shared/schemas'
+import { LeadsSchema, ResearchSchema, ScoreSchema } from '@shared/schemas'
 import { competingProspects, expectedVerdict, findDuplicate, normaliseDomain } from '@shared/rules'
-import { GAP_LABEL, type Company, type ResearchRecord, type RuleOut, type Stage } from '@shared/domain'
+import { GAP_LABEL, type Company, type RuleOut, type Stage } from '@shared/domain'
 
 /* Extra save tools registered by the prepare module (phase 5), keyed by tool name. */
 export const extraTools = new Map<string, (ctx: JobContext, companyId: number, done: Set<string>) => ReturnType<typeof saveTool>>()
@@ -61,35 +61,10 @@ async function slot<T>(ctx: JobContext, fn: () => Promise<T>): Promise<T> {
   try { return await fn() } finally { active--; waiting.shift()?.() }
 }
 
-/* ---------- evidence rule, enforced in code ---------- */
-
-const ABSENCE = /\b(no|not|missing|without|absent|lacks?|none|doesn'?t|isn'?t)\b/i
-const CONTACTISH = /contact|enquir|inquir|book|quote|reserv|hire|get-in-touch/i
-
-export function applyEvidenceRule(findings: ResearchResult['findings'], companyId: number): Omit<ResearchRecord, 'id' | 'companyId' | 'jobId'>[] {
-  const dir = evidenceDir(companyId)
-  const checkedAt = new Date().toISOString()
-  return findings.map((f) => {
-    let verified = f.verified
-    let finding = f.finding
-    const onSitePath = f.category === 'contact_path' || f.category === 'tracking' || f.gapType === 'broken_contact' || f.gapType === 'nothing_measured'
-    if (verified && onSitePath && ABSENCE.test(f.finding)) {
-      const pages = new Set(f.pagesChecked.map((p) => p.replace(/\/$/, '')))
-      const sawContactPage = f.pagesChecked.some((p) => CONTACTISH.test(p))
-      if (pages.size < 2 || !sawContactPage) {
-        verified = false
-        finding = `${finding} (not verified: the contact/booking page was not checked)`
-      }
-    }
-    const shot = f.screenshotPath && f.screenshotPath.startsWith(dir) && existsSync(f.screenshotPath) ? f.screenshotPath : null
-    return { category: f.category, finding, gapType: f.gapType, sourceUrl: f.sourceUrl, pagesChecked: f.pagesChecked, screenshotPath: shot, checkedAt, verified }
-  })
-}
-
 function researchSaveTool(ctx: JobContext, companyId: number, done: Set<string>) {
   return saveTool('save_research', 'Save the complete evidence record for this company. Call once at the end.', ResearchSchema, (r) => {
     const repo = getRepo()
-    const records = applyEvidenceRule(r.findings, companyId)
+    const records = applyEvidenceRule(r.findings, evidenceDir(companyId))
     repo.db.transaction(() => {
       repo.replaceResearch(companyId, ctx.jobId, records)
       if (r.companiesOffice) {

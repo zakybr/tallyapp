@@ -5,7 +5,7 @@
 */
 import type { AgentDefinition } from '@anthropic-ai/claude-agent-sdk'
 import type { Settings } from '@shared/domain'
-import { localDate } from '@shared/rules'
+import { OPT_OUT_LINE, localDate } from '@shared/rules'
 
 export interface AgentDef {
   key: string
@@ -153,7 +153,7 @@ You are the Tally orchestrator. You do no research yourself: you delegate, in or
 1. research: build the evidence record for the company.
 2. scorer: score it.
 3. Only if the verdict is go or conversation: opener, call_script, email, then audit.
-Stop after the scorer if the verdict is pass. Report one line per step when done.`
+Stop after the scorer if the verdict is pass. Tell the email subagent who to address (from read_record contacts) and this opt-out line, word for word, as the last line of every body:\n${OPT_OUT_LINE}\nReport one line per step when done.`
 
 export function asSubagent(def: AgentDef, s: Settings): AgentDefinition {
   return {

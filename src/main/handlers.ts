@@ -1,15 +1,16 @@
 import { app, dialog, shell, BrowserWindow } from 'electron'
-import { join } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { handle, emit } from './ipc'
 import { getRepo, dataDir } from './context'
 import { EXPORTABLE, toCsv } from './db/repo'
-import { findDuplicate, localDate, monthlyRecurring, trailing12, gstWarning, proposalCapCheck } from '@shared/rules'
-import type { TodaySummary } from '@shared/domain'
+import { findDuplicate, localDate, monthlyRecurring, nextWorkingDay, trailing12, gstWarning, proposalCapCheck } from '@shared/rules'
+import { CALL_OUTCOME_LABEL, type TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
 import { start } from './agents/jobs'
 import './agents/research'
+import './agents/prepare'
 import { cancelJob } from './agents/runner'
 import { claudeExecutable, skillsDir } from './agents/env'
 
@@ -117,4 +118,28 @@ export function registerDataHandlers(): void {
   handle('jobLog', async (id) => repo.jobLog(id))
   handle('agentInfo', async () => ({ skillsDir: skillsDir(), executable: claudeExecutable() ?? null, authMode: repo.getSettings().authMode }))
   handle('revealPath', async (p) => { shell.showItemInFolder(p) })
+  // Only files Tally wrote (audits, evidence) can be opened from the renderer.
+  handle('openPath', async (p) => {
+    const full = resolve(p)
+    if (!full.startsWith(resolve(dataDir()) + sep)) throw new Error('Not a Tally file')
+    const err = await shell.openPath(full)
+    if (err) throw new Error(err)
+  })
+
+  handle('logCall', async (companyId, outcome, notes) => {
+    const c = repo.getCompany(companyId)
+    if (!c) throw new Error('Company not found')
+    const text = notes.trim()
+    // The notes are kept on the timeline first, so a failed debrief never loses them.
+    if (outcome || text) repo.addActivity(companyId, 'call', `Call: ${outcome ? CALL_OUTCOME_LABEL[outcome] : 'notes'}`, text || null)
+    changed('activities', companyId)
+    if (!text && (!outcome || outcome === 'no_answer')) {
+      if (outcome === 'no_answer' && (!c.nextStepDue || c.nextStepDue.slice(0, 10) <= localDate())) {
+        repo.updateCompany(companyId, { nextStep: 'Call again', nextStepDue: nextWorkingDay() })
+        changed('companies', companyId)
+      }
+      return null
+    }
+    return start('debrief', { companyId, notes: text, outcome })
+  })
 }

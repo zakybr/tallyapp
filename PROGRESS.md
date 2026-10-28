@@ -17,9 +17,28 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
       login; optional API key mode), `jobs.ts` (job registry + Connection check), Agents screen (history, run log, 7-day usage,
       cancel / cancel all). Verified: check job ran on claude-opus-5-5 "via Claude Code login", loaded all 5 skills, 2.6k tokens;
       cancellation leaves no orphan CLI process. Code review for phases 3+4 is done together at the end of phase 4.
-- [ ] 4. Research + score
-- [ ] 5. Prepare + contact
-- [ ] 6. Polish + package
+- [~] **4. Research + score** — code complete; **the real-case run (AOMAS, White Pointer) still has to be done on the Mac.**
+      robots.txt + rate limit (`src/main/audit/robots.ts`), Playwright site audit at desktop + 375px with screenshots
+      (`src/main/audit/siteAudit.ts`), Lead Finder / Research / Scorer jobs and the orchestrator (`src/main/agents/research.ts`),
+      evidence rule enforced in code (`src/main/agents/evidence.ts`), verdict consistency check (`expectedVerdict`), Find screen,
+      evidence cards, gaps checklist, Instagram benchmark with peer-median flag.
+- [x] **5. Prepare + contact** (`src/main/agents/prepare.ts`) — opener, call script, email sequence, audit PDF and debrief jobs, plus
+      a `prepare` job that runs all four drafts. Save tools are shared with the orchestrator via `extraTools`.
+      Audit PDF: `src/main/audit/auditHtml.ts` (pure HTML, per the tally-audit-pdf skill) printed to A4 by a hidden sandboxed
+      window (`pdf.ts`) into `<userData>/audits/<slug>-<companyId>-audit-<date>.pdf`; a PDF marked sent is never overwritten.
+      Prospect detail: editable opener/script/emails (live lint: word count, subject length, hype, US spelling, em dash, opt-out),
+      Copy, Open in mail app (mailto), "I sent this" log, audit Open / Show in Finder, Debrief box + history
+      (`src/renderer/src/components/prospect/Prepare.tsx`). Call mode (`screens/CallMode.tsx`): opener, numbered script,
+      first-call question, verified gaps, notes, outcome buttons; closing logs the call (notes saved to the timeline first)
+      and hands notes to the Debrief Agent. No answer → "Call again" next working day.
+      Compliance: opted-out companies are blocked in main (`companySuppressed`, `repo.hasOptedOut`); a guessed/unsourced
+      address needs a confirm (main throws "Compliance check:", the renderer confirms and retries with `acknowledged`;
+      declining Prepare still drafts opener/script/audit). The orchestrator path refuses risky addresses in `save_emails`.
+      Opt-out via debrief suppresses every address **and the domain**, withdraws unsent emails, and logs `opt_out`.
+- [x] **6. Polish + package** — Today (calls to make, follow-ups due with overdue flag, live proposals x/cap with tally slots,
+      retainers vs target + MRR, trailing-12 revenue vs GST threshold, running agents, pipeline tally strip), ⌘K command
+      palette (screens, prospects, call mode, backup, CSV, dark mode). Code review (phases 3–5): 10 findings, all fixed.
+      **Still to do on the Mac:** `npm run dist:mac` and launch the .dmg; real agent runs of every Phase 5 agent.
 
 ## Decisions
 
@@ -43,6 +62,27 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
 - **Skills location**: dev = repo `.claude/skills`; packaged = `~/Library/Application Support/Tally/agent-home/.claude/skills`,
   seeded once from the bundle and never overwritten (edits survive updates).
 
+- **Fake agents for tests**: `TALLY_FAKE_AGENTS=1` swaps the SDK for `src/main/agents/fake.ts`, which calls each agent's *real*
+  save tool with fixture data. The e2e flow test uses it, so validation, compliance, saving, PDF and UI are tested with no
+  model, network or login. Never set it in normal use.
+- **Evidence screenshots** must live inside that company's own `evidence/<id>/` folder (`ownScreenshot`); this also fixed a
+  prefix bug where `evidence/1` matched `evidence/12`.
+- **Em dashes** are stripped with their surrounding spaces (`noEmDash`) from every saved draft.
+- **Call notes** go on the timeline as a `call` activity before the debrief starts, so a failed agent never loses them.
+- **Cloud session (28 Oct 2026)**: phases 4 (tests/review), 5 and 6 were built in a Claude Code cloud container (Linux, no
+  outside web access). better-sqlite3 v13's N-API prebuild loads in Electron without a rebuild, so `npm test`, the
+  Electron e2e suite (under `xvfb-run`) and an unpacked Linux package were all verified there. Agents were not run for real
+  there, and no live sites were audited.
+
+## Next (on the Mac)
+
+1. `git pull`, `npm ci`, `npm run build`, `npm test`, `npm run e2e`.
+2. Phase 4 acceptance: research **AOMAS, Orewa** and **White Pointer Boats** for real (`node scripts/real-case.mjs` or the UI),
+   check the evidence records, then Prepare both and read every draft and the audit PDF.
+3. `npm run dist:mac`, open `release/Tally-0.1.0-arm64.dmg`, drag to Applications. It is unsigned (no Developer ID on this
+   Mac): the first time, right-click Tally in Applications → Open → Open. If macOS still blocks it, System Settings →
+   Privacy & Security → "Open Anyway". Or run `xattr -dr com.apple.quarantine /Applications/Tally.app` once.
+
 ## Commands
 
     npm run dev        # hot-reload app
@@ -52,3 +92,4 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
     npm run e2e        # Playwright Electron smoke test
     npm run dist:mac   # release/Tally-<v>-arm64.dmg
     node scripts/run-job.mjs check   # run an agent job headlessly and stream its log (needs `npm run build`)
+    xvfb-run -a npx playwright test  # e2e on Linux (CI/cloud); on the Mac just `npm run e2e`

@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink, Phone, Trash2 } from 'lucide-react'
 import { api, useData, domainOf, ago } from '@/lib/api'
 import { VerdictCard, EvidenceList, Benchmark } from '@/components/prospect/Evidence'
 import { AgentButtons, LiveRun } from '@/components/prospect/AgentActions'
+import { PrepareSections } from '@/components/prospect/Prepare'
 import { navigate } from '@/lib/router'
 import { VerdictBadge, Section } from '@/components/ui'
 import { InlineField } from '@/components/InlineField'
@@ -10,7 +11,7 @@ import { Timeline } from '@/components/prospect/Timeline'
 import { TallyLoader, EmptyState } from '@/components/Tally'
 import { useToast } from '@/components/Toast'
 import { moveStage } from './Pipeline'
-import { STAGES, STAGE_LABEL, type CompanyDetail, type CompanyPatch, type Stage } from '@shared/domain'
+import { STAGES, STAGE_LABEL, type CompanyDetail, type CompanyPatch, type Stage, type Suppression } from '@shared/domain'
 import { competingProspects } from '@shared/rules'
 
 export function Prospect({ id }: { id: number }) {
@@ -66,7 +67,7 @@ export function Prospect({ id }: { id: number }) {
 
       <div className="grid flex-1 grid-cols-[minmax(0,1fr)_340px] gap-8 px-8 py-6">
         <div className="flex min-w-0 flex-col gap-8" id="prospect-main">
-          <ProspectWork d={d} />
+          <ProspectWork d={d} suppression={suppression ?? []} />
         </div>
         <aside className="flex flex-col gap-7">
           <Section title="Next step">
@@ -103,7 +104,7 @@ export function Prospect({ id }: { id: number }) {
   )
 }
 
-function ProspectWork({ d }: { d: CompanyDetail }) {
+function ProspectWork({ d, suppression }: { d: CompanyDetail; suppression: Suppression[] }) {
   const id = d.company.id
   return (
     <>
@@ -113,13 +114,7 @@ function ProspectWork({ d }: { d: CompanyDetail }) {
         {d.research.length ? <EvidenceList research={d.research} /> : <EmptyState title="Not researched yet" body="Research runs a live site audit, Companies Office and off-site checks, with a source for every claim." />}
       </Section>
       {d.benchmark.length > 0 && <Section title="Instagram benchmark"><Benchmark rows={d.benchmark} /></Section>}
-      <PrepareSections d={d} />
+      <PrepareSections d={d} suppression={suppression} />
     </>
   )
-}
-
-/* Opener, call script, emails and audit PDF (phase 5). */
-function PrepareSections({ d }: { d: CompanyDetail }) {
-  void d
-  return null
 }

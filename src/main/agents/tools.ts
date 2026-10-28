@@ -154,12 +154,12 @@ export function placesTool(ctx: JobContext) {
 }
 
 /* A save_* tool: validates, then persists. Errors go back to the agent to fix. */
-export function saveTool<S extends z.ZodObject>(name: string, description: string, schema: S, onSave: (v: z.infer<S>) => string | void) {
+export function saveTool<S extends z.ZodObject>(name: string, description: string, schema: S, onSave: (v: z.infer<S>) => string | void | Promise<string | void>) {
   return tool(name, description, schema.shape, async (args) => {
     const parsed = schema.safeParse(args)
     if (!parsed.success) return fail(`Not saved. Fix these and call ${name} again:\n${z.prettifyError(parsed.error)}`)
     try {
-      const msg = onSave(parsed.data)
+      const msg = await onSave(parsed.data)
       return ok(msg ?? 'Saved.')
     } catch (e) {
       return fail(`Not saved: ${e instanceof Error ? e.message : e}`)

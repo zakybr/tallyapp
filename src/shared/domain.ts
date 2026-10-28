@@ -156,11 +156,11 @@ export interface Score {
   createdAt: string
 }
 
-export type OutreachKind = 'opener' | 'call_script' | 'email_1' | 'email_2' | 'email_3' | 'audit_pdf'
+export type OutreachKind = 'opener' | 'call_script' | 'email_1' | 'email_2' | 'email_3' | 'follow_up' | 'audit_pdf'
 
 export const OUTREACH_LABEL: Record<OutreachKind, string> = {
   opener: 'Opener', call_script: 'Call script', email_1: 'First email',
-  email_2: 'Follow-up', email_3: 'Breakup', audit_pdf: 'Audit PDF'
+  email_2: 'Follow-up', email_3: 'Breakup', follow_up: 'Debrief follow-up', audit_pdf: 'Audit PDF'
 }
 
 export interface Outreach {
@@ -180,6 +180,13 @@ export interface Outreach {
 export type ActivityKind =
   | 'note' | 'call' | 'email_sent' | 'meeting' | 'stage_change'
   | 'research' | 'score' | 'draft' | 'debrief' | 'proposal' | 'opt_out'
+
+export const CALL_OUTCOMES = ['no_answer', 'callback', 'meeting_booked', 'not_interested'] as const
+export type CallOutcome = (typeof CALL_OUTCOMES)[number]
+
+export const CALL_OUTCOME_LABEL: Record<CallOutcome, string> = {
+  no_answer: 'No answer', callback: 'Callback', meeting_booked: 'Meeting booked', not_interested: 'Not interested'
+}
 
 export interface Activity {
   id: number
@@ -287,7 +294,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export type JobKind =
   | 'lead_finder' | 'research' | 'score' | 'opener' | 'call_script'
-  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'pipeline' | 'check'
+  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'prepare' | 'pipeline' | 'check'
 
 export const JOB_LABEL: Record<JobKind, string> = {
   lead_finder: 'Lead Finder',
@@ -298,6 +305,7 @@ export const JOB_LABEL: Record<JobKind, string> = {
   email_sequence: 'Email Drafter',
   audit_pdf: 'Audit Builder',
   debrief: 'Debrief Agent',
+  prepare: 'Prepare',
   pipeline: 'Orchestrator',
   check: 'Connection check'
 }

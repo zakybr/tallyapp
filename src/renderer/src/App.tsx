@@ -10,10 +10,11 @@ import { Prospect } from './screens/Prospect'
 import { CallMode } from './screens/CallMode'
 import { Agents } from './screens/Agents'
 import { Settings } from './screens/Settings'
+import { CommandPalette } from './components/CommandPalette'
 
 export function App() {
   const route = useRoute()
-  const [, setPalette] = useState(false)
+  const [palette, setPalette] = useState(false)
   const running = useJobs().filter((j) => j.status === 'running').length
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  if (route.name === 'call') return <ToastProvider><CallMode /></ToastProvider>
+  if (route.name === 'call') return <ToastProvider><CallMode id={route.id} /></ToastProvider>
 
   return (
     <ToastProvider>
@@ -45,6 +46,7 @@ export function App() {
         </div>
       </main>
     </div>
+    <CommandPalette open={palette} onClose={() => setPalette(false)} />
     </ToastProvider>
   )
 }

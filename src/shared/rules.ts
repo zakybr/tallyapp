@@ -177,3 +177,11 @@ export function competingProspects(
     (o) => o.id !== target.id && live.has(o.stage) && !!target.vertical && o.vertical === target.vertical && !!target.area && o.area === target.area
   )
 }
+
+/* Next Monday–Friday after `d`, as a local YYYY-MM-DD. */
+export function nextWorkingDay(d = new Date()): string {
+  const n = new Date(d)
+  do n.setDate(n.getDate() + 1)
+  while (n.getDay() === 0 || n.getDay() === 6)
+  return localDate(n)
+}
