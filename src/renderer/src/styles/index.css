@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@font-face { font-family: 'General Sans'; src: url('../assets/fonts/GeneralSans-Regular.woff2') format('woff2'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'General Sans'; src: url('../assets/fonts/GeneralSans-Medium.woff2') format('woff2'); font-weight: 500; font-display: block; }
+@font-face { font-family: 'General Sans'; src: url('../assets/fonts/GeneralSans-Semibold.woff2') format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'General Sans'; src: url('../assets/fonts/GeneralSans-Bold.woff2') format('woff2'); font-weight: 700; font-display: block; }
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+  Tally tokens. Chrome is the desk (always near-black). Paper is the sheet the
+  work sits on. Amber is the one accent: primary actions, active states, the
+  cross-stroke of every tally mark.
+*/
+:root {
+  --chrome: #0e0e0d;
+  --chrome-2: #161614;
+  --chrome-3: #20201d;
+  --chrome-line: rgba(236, 231, 220, 0.08);
+  --chrome-ink: #ece7dc;
+  --chrome-ink-2: #a8a295;
+  --chrome-ink-3: #6f6a60;
+
+  --paper: #f6f2e9;
+  --paper-2: #efe9dc;
+  --paper-3: #e4dccb;
+  --paper-raised: #fbf8f2;
+  --ink: #1d1b17;
+  --ink-2: #4c473e;
+  --ink-3: #7b7466;
+  --rule: rgba(29, 27, 23, 0.11);
+  --rule-strong: rgba(29, 27, 23, 0.22);
+
+  --amber: #f0a52c;
+  --amber-hover: #f6b546;
+  --amber-ink: #8a5300;
+  --amber-wash: rgba(240, 165, 44, 0.14);
+  --on-amber: #1d1b17;
+
+  --go: #2f6b43;
+  --go-wash: rgba(47, 107, 67, 0.12);
+  --conv: #8a5300;
+  --conv-wash: rgba(240, 165, 44, 0.16);
+  --pass: #8c3a2b;
+  --pass-wash: rgba(140, 58, 43, 0.1);
+  --danger: #b23a26;
+
+  --shadow-sheet: 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px -24px rgba(0, 0, 0, 0.6);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --paper: #1a1916;
+  --paper-2: #211f1c;
+  --paper-3: #2b2925;
+  --paper-raised: #1f1e1a;
+  --ink: #ece6d9;
+  --ink-2: #b7b0a2;
+  --ink-3: #847d70;
+  --rule: rgba(236, 230, 217, 0.09);
+  --rule-strong: rgba(236, 230, 217, 0.2);
+  --amber-ink: #f3b04a;
+  --go: #6fbf87;
+  --go-wash: rgba(111, 191, 135, 0.12);
+  --conv: #f3b04a;
+  --pass: #e0806d;
+  --pass-wash: rgba(224, 128, 109, 0.12);
+  --danger: #ef7a62;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-chrome: var(--chrome);
+  --color-chrome-2: var(--chrome-2);
+  --color-chrome-3: var(--chrome-3);
+  --color-chrome-line: var(--chrome-line);
+  --color-chrome-ink: var(--chrome-ink);
+  --color-chrome-ink-2: var(--chrome-ink-2);
+  --color-chrome-ink-3: var(--chrome-ink-3);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-amber: var(--amber);
+  --color-amber-hover: var(--amber-hover);
+  --color-amber-ink: var(--amber-ink);
+  --color-amber-wash: var(--amber-wash);
+  --color-on-amber: var(--on-amber);
+  --color-go: var(--go);
+  --color-go-wash: var(--go-wash);
+  --color-conv: var(--conv);
+  --color-conv-wash: var(--conv-wash);
+  --color-pass: var(--pass);
+  --color-pass-wash: var(--pass-wash);
+  --color-danger: var(--danger);
+  --font-display: 'Barlow Condensed', 'General Sans', system-ui, sans-serif;
+  --font-sans: 'General Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--chrome);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+input, textarea, select, [contenteditable], .selectable { user-select: text; }
+::selection { background: var(--amber-wash); }
+
+.drag { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+.display { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.005em; line-height: 0.95; }
+.label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; }
+table { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); font-size: 11.5px; }
+
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 4px; }
+
+.scroll-quiet { scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
+
+/* Tally loader: strokes draw in, then the cross-stroke. */
+@keyframes tally-stroke { 0%, 10% { stroke-dashoffset: 1; } 30%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.tally-loader line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: tally-stroke 1.8s cubic-bezier(.6,0,.2,1) infinite; }
+.tally-loader line:nth-child(2) { animation-delay: 0.12s; }
+.tally-loader line:nth-child(3) { animation-delay: 0.24s; }
+.tally-loader line:nth-child(4) { animation-delay: 0.36s; }
+.tally-loader line:nth-child(5) { animation-delay: 0.52s; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 220ms cubic-bezier(.2,.7,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}

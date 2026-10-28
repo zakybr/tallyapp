@@ -1,0 +1,37 @@
+appId: co.tallynz.tally
+productName: Tally
+copyright: Tally Marketing Limited
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  - .claude/skills/**
+asarUnpack:
+  - node_modules/better-sqlite3/**
+  - node_modules/@anthropic-ai/claude-agent-sdk*/**
+  - node_modules/playwright-core/**
+extraResources:
+  - from: .claude/skills
+    to: skills
+publish: null
+mac:
+  icon: build/icon.icns
+  category: public.app-category.business
+  target:
+    - target: dmg
+      arch: [arm64]
+  identity: null
+  hardenedRuntime: false
+  darkModeSupport: true
+dmg:
+  title: Tally
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
