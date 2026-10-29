@@ -65,6 +65,20 @@ export const CATEGORY_CATALOG: CatalogGroup[] = [
     'Private tutoring centres', 'Driving schools', 'Flight schools', 'Music schools', 'Swim schools', 'Childcare (privately owned)',
     'Boutique real estate agencies', 'Mortgage advisers', 'Funeral directors (independent)', 'Self storage'
   ] },
+  { group: 'Startups and tech', items: [
+    'Agritech startups', 'Aquaculture and seafood tech', 'Food tech and alt-protein', 'Climate tech and cleantech', 'Energy and battery startups',
+    'SaaS startups', 'Fintech startups', 'Healthtech and medtech', 'Biotech', 'Edtech', 'Proptech and construction tech', 'Marine tech',
+    'Drone and aerospace', 'Space tech', 'Robotics and automation', 'Hardware and IoT', 'Game studios', 'AI startups', 'Cybersecurity',
+    'Direct-to-consumer brands', 'E-commerce brands', 'Crowdfunded startups (PledgeMe, Snowball)', 'Incubator and accelerator cohorts',
+    'Recently funded startups', 'Tech exporters'
+  ] },
+  { group: 'Primary industries', items: [
+    'Seafood and fishing companies', 'Aquaculture (mussels, salmon, oysters)', 'Forestry contractors', 'Sawmills and wood processors',
+    'Kiwifruit growers and packhouses', 'Apple and pipfruit orchards', 'Avocado growers', 'Berry farms', 'Market gardens and vegetable growers',
+    'Vineyards and wineries', 'Dairy farms and processors', 'Meat processors and butchers', 'Honey and mānuka producers', 'Deer and venison farms',
+    'Wool and fibre producers', 'Nurseries and plant growers', 'Agricultural contractors', 'Rural merchandise stores', 'Grain and feed suppliers',
+    'Food and beverage exporters', 'Craft food producers', 'Co-ops and grower groups'
+  ] },
   { group: 'Asking for help online', items: [
     'Businesses asking for a web designer', 'Businesses asking for marketing help', 'Businesses asking for social media help',
     'Businesses with no website', 'Businesses with a broken website', 'Businesses with no Google listing', 'New businesses (registered this year)',
@@ -72,7 +86,7 @@ export const CATEGORY_CATALOG: CatalogGroup[] = [
   ] }
 ]
 
-/* The Auckland region by local board area, then the rest of New Zealand. */
+/* The Auckland region by local board area, then every other region of New Zealand. */
 export const AREA_CATALOG: CatalogGroup[] = [
   { group: 'Auckland region', items: ['Auckland region (all)', 'North Shore', 'Hibiscus Coast', 'Rodney', 'West Auckland', 'Central Auckland', 'East Auckland', 'South Auckland', 'Franklin', 'Hauraki Gulf islands'] },
   { group: 'North Shore', items: [
@@ -120,7 +134,17 @@ export const AREA_CATALOG: CatalogGroup[] = [
     'Pukekawa', 'Tuakau (Waikato border)', 'Pōkeno (Waikato border)', 'Waiau Pa', 'Hunua', 'Kaiaua', 'Mauku'
   ] },
   { group: 'Hauraki Gulf islands', items: ['Waiheke Island', 'Oneroa', 'Ostend', 'Onetangi', 'Great Barrier Island (Aotea)', 'Kawau Island', 'Rakino Island'] },
-  { group: 'Upper North Island', items: ['Whangārei', 'Bay of Islands', 'Kerikeri', 'Paihia', 'Mangawhai', 'Dargaville', 'Hamilton', 'Cambridge', 'Raglan', 'Coromandel', 'Whitianga', 'Thames', 'Waihi', 'Tauranga', 'Mount Maunganui', 'Rotorua', 'Taupō', 'Whakatāne'] },
-  { group: 'Lower North Island', items: ['Gisborne', 'Napier', 'Hastings', 'New Plymouth', 'Whanganui', 'Palmerston North', 'Kāpiti Coast', 'Wellington', 'Lower Hutt', 'Wairarapa', 'Martinborough'] },
-  { group: 'South Island', items: ['Nelson', 'Motueka', 'Marlborough', 'Blenheim', 'Picton', 'Kaikōura', 'Christchurch', 'Akaroa', 'Hanmer Springs', 'Timaru', 'Ōamaru', 'Wānaka', 'Queenstown', 'Dunedin', 'Invercargill', 'West Coast'] }
+  { group: 'Northland', items: ['Northland (all)', 'Whangārei', 'Kerikeri', 'Paihia', 'Russell', 'Bay of Islands', 'Kaitāia', 'Mangōnui', 'Doubtless Bay', 'Kaikohe', 'Dargaville', 'Mangawhai', 'Ruakākā', 'Waipu', 'Ngunguru', 'Tutukaka', 'Hokianga', 'Ahipara'] },
+  { group: 'Waikato', items: ['Waikato (all)', 'Hamilton', 'Hamilton East', 'Rototuna', 'Te Rapa', 'Frankton', 'Cambridge', 'Te Awamutu', 'Huntly', 'Ngāruawāhia', 'Raglan', 'Morrinsville', 'Matamata', 'Te Aroha', 'Paeroa', 'Tokoroa', 'Putāruru', 'Ōtorohanga', 'Te Kūiti', 'Taupō', 'Tūrangi', 'Thames', 'Coromandel', 'Whitianga', 'Tairua', 'Pauanui', 'Whangamatā', 'Waihi', 'Waihi Beach'] },
+  { group: 'Bay of Plenty', items: ['Bay of Plenty (all)', 'Tauranga', 'Mount Maunganui', 'Pāpāmoa', 'Bethlehem', 'Ōmokoroa', 'Katikati', 'Te Puke', 'Rotorua', 'Whakatāne', 'Ōhope', 'Kawerau', 'Edgecumbe', 'Ōpōtiki'] },
+  { group: 'Gisborne and Hawke\'s Bay', items: ['Gisborne', 'Tolaga Bay', 'Wairoa', "Hawke's Bay (all)", 'Napier', 'Taradale', 'Hastings', 'Havelock North', 'Clive', 'Waipukurau', 'Waipawa'] },
+  { group: 'Taranaki', items: ['Taranaki (all)', 'New Plymouth', 'Bell Block', 'Ōakura', 'Waitara', 'Inglewood', 'Stratford', 'Hāwera', 'Ōpunake', 'Eltham'] },
+  { group: 'Manawatū-Whanganui', items: ['Manawatū-Whanganui (all)', 'Palmerston North', 'Feilding', 'Levin', 'Foxton', 'Whanganui', 'Marton', 'Taihape', 'Ohakune', 'Raetihi', 'Dannevirke', 'Pahiatua'] },
+  { group: 'Wellington region', items: ['Wellington region (all)', 'Wellington CBD', 'Te Aro', 'Thorndon', 'Kelburn', 'Karori', 'Miramar', 'Lyall Bay', 'Island Bay', 'Newtown', 'Johnsonville', 'Ngaio', 'Khandallah', 'Porirua', 'Whitby', 'Lower Hutt', 'Petone', 'Eastbourne', 'Upper Hutt', 'Kāpiti Coast', 'Paraparaumu', 'Waikanae', 'Ōtaki', 'Wairarapa', 'Masterton', 'Carterton', 'Greytown', 'Featherston', 'Martinborough'] },
+  { group: 'Nelson, Tasman and Marlborough', items: ['Nelson', 'Stoke', 'Richmond', 'Motueka', 'Māpua', 'Tākaka', 'Golden Bay', 'Kaiteriteri', 'Murchison', 'Marlborough (all)', 'Blenheim', 'Picton', 'Havelock', 'Renwick', 'Marlborough Sounds', 'Kaikōura'] },
+  { group: 'West Coast', items: ['West Coast (all)', 'Greymouth', 'Hokitika', 'Westport', 'Reefton', 'Punakaiki', 'Franz Josef', 'Fox Glacier', 'Haast'] },
+  { group: 'Canterbury', items: ['Canterbury (all)', 'Christchurch CBD', 'Riccarton', 'Fendalton', 'Merivale', 'Papanui', 'Hornby', 'Sydenham', 'Sumner', 'Lyttelton', 'New Brighton', 'Halswell', 'Rolleston', 'Lincoln (Canterbury)', 'Rangiora', 'Kaiapoi', 'Pegasus', 'Oxford', 'Darfield', 'Akaroa', 'Hanmer Springs', 'Ashburton', 'Methven', 'Geraldine', 'Timaru', 'Temuka', 'Fairlie', 'Lake Tekapo', 'Twizel', 'Waimate'] },
+  { group: 'Otago', items: ['Otago (all)', 'Dunedin', 'Mosgiel', 'Port Chalmers', 'St Clair', 'Ōamaru', 'Alexandra', 'Clyde', 'Cromwell', 'Wānaka', 'Queenstown', 'Frankton (Queenstown)', 'Arrowtown', 'Glenorchy', 'Balclutha', 'Roxburgh', 'Ranfurly'] },
+  { group: 'Southland', items: ['Southland (all)', 'Invercargill', 'Bluff', 'Gore', 'Winton', 'Te Anau', 'Riverton', 'Stewart Island (Rakiura)'] },
+  { group: 'Whole country', items: ['All of New Zealand', 'North Island', 'South Island'] }
 ]
