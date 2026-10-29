@@ -15,7 +15,7 @@ const tag = `v${version}`
 const notes = process.argv.slice(2).join(' ').trim()
 if (!notes) { console.error('Usage: node scripts/release.mjs "release notes"'); process.exit(1) }
 
-if (execSync('git status --porcelain').toString().trim()) { console.error('Commit your changes first.'); process.exit(1) }
+if (execSync('git status --porcelain --untracked-files=no').toString().trim()) { console.error('Commit your changes first.'); process.exit(1) }
 execSync('git fetch -q origin main')
 if (execSync('git rev-parse HEAD').toString() !== execSync('git rev-parse origin/main').toString()) { console.error('Push main to GitHub first.'); process.exit(1) }
 
