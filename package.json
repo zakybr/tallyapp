@@ -1,7 +1,7 @@
 {
   "name": "tally",
   "productName": "Tally",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Find, research, score and contact prospects for Tally Marketing Limited.",
   "author": "Zak Rachmadi <zak@tallynz.co>",
   "private": true,
