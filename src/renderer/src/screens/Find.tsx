@@ -7,6 +7,9 @@ import { useToast } from '@/components/Toast'
 import { api, useData, domainOf, ago } from '@/lib/api'
 import { useJobs } from '@/lib/jobs'
 import { navigate } from '@/lib/router'
+import { Combobox } from '@/components/Combobox'
+import { AREA_CATALOG, CATEGORY_CATALOG } from '@shared/catalog'
+import { MAX_LEADS } from '@shared/schemas'
 
 export function Find() {
   const toast = useToast()
@@ -14,6 +17,7 @@ export function Find() {
   const { data: runs } = useData(() => api.listLeadRuns())
   const jobs = useJobs()
   const [category, setCategory] = useState('')
+  const [count, setCount] = useState(MAX_LEADS)
   const [area, setArea] = useState('')
   const [runId, setRunId] = useState<number | null>(null)
   const [picked, setPicked] = useState<Set<number>>(new Set())
@@ -28,7 +32,7 @@ export function Find() {
 
   const start = async () => {
     if (!category.trim() || !area.trim()) return
-    await api.startJob('lead_finder', { category: category.trim(), area: area.trim() })
+    await api.startJob('lead_finder', { category: category.trim(), area: area.trim(), count })
     setRunId(null)
   }
   const researchSelected = async () => {
@@ -48,10 +52,9 @@ export function Find() {
     <div className="flex min-h-full flex-col">
       <PageHeader eyebrow="Web search, never Maps or LinkedIn scraping" title="Find" />
       <form className="flex items-end gap-3 border-b border-rule px-8 py-5" onSubmit={(e) => { e.preventDefault(); void start() }}>
-        <div className="w-80"><Field label="Category"><Input list="verticals" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Boat builders" /></Field></div>
-        <datalist id="verticals">{settings?.verticals.map((v) => <option key={v} value={v} />)}</datalist>
-        <div className="w-64"><Field label="Area"><Input list="regions" value={area} onChange={(e) => setArea(e.target.value)} placeholder="Hibiscus Coast" /></Field></div>
-        <datalist id="regions">{settings?.regions.map((v) => <option key={v} value={v} />)}</datalist>
+        <div className="w-80"><Field label="Category"><Combobox label="Category" value={category} onChange={setCategory} placeholder="Boat builders" groups={[{ group: 'Your focus', items: settings?.verticals ?? [] }, ...CATEGORY_CATALOG]} /></Field></div>
+        <div className="w-64"><Field label="Area"><Combobox label="Area" value={area} onChange={setArea} placeholder="Hibiscus Coast" groups={[{ group: 'Your region', items: settings?.regions ?? [] }, ...AREA_CATALOG]} /></Field></div>
+        <div className="w-24"><Field label="How many"><Input type="number" min={1} max={MAX_LEADS} value={count} onChange={(e) => setCount(Math.max(1, Math.min(MAX_LEADS, Number(e.target.value) || 1)))} /></Field></div>
         <Button type="submit" variant="primary" disabled={!!finder || !category.trim() || !area.trim()}><Search size={15} />Find leads</Button>
         {settings?.placesApiKey ? <span className="pb-2 text-[12px] text-go">Using Google Places API</span> : <span className="pb-2 text-[12px] text-ink-3">Web search. Add a Places key in Settings for listings data.</span>}
       </form>

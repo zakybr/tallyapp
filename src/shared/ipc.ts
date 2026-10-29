@@ -6,6 +6,7 @@ import type {
   Company, CompanyDetail, CompanyInput, CompanyPatch, Conflict, Contact, ContactInput, Job, JobLogEntry,
   CallOutcome, GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary
 } from './domain'
+import type { UpdateState } from './version'
 
 export interface AppInfo {
   version: string
@@ -59,6 +60,10 @@ export interface TallyApi {
   exportCsv(): Promise<{ folder: string; files: string[] } | null>
   backup(): Promise<{ file: string } | null>
   revealPath(path: string): Promise<void>
+
+  updateStatus(): Promise<UpdateState>
+  checkForUpdates(): Promise<UpdateState>
+  installUpdate(): Promise<void>
   openPath(path: string): Promise<void>
 
   /* Call mode: logs the call, and hands any notes to the Debrief Agent. */
@@ -72,7 +77,7 @@ export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
   'upsertContact', 'deletePerson', 'exportPerson', 'runRetention', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
-  'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'openPath', 'logCall'
+  'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
 ]
 
 export interface TallyEvents {
@@ -80,6 +85,7 @@ export interface TallyEvents {
   'job:update': Job
   'data:changed': { table: string; companyId?: number }
   nav: { to: string }
+  'update:status': UpdateState
 }
 
 export type EventName = keyof TallyEvents

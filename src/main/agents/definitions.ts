@@ -40,7 +40,7 @@ You are the Lead Finder. Given a category and an area, build a list of real, cur
 - Include businesses that look under-marketed: no website, an old site, no Google listing, few socials, or that are asking for web designers.
 - For each, record name, website, phone, address, a Google listing or search URL only if it appeared in search results, the area, and a one-line note on why it might fit.
 - Call check_pipeline for every candidate and leave out anything already in the pipeline, passed before, or on the conflicts list.
-- Aim for 8–25 good candidates. Quality over volume. Do not include franchises of national chains or businesses clearly outside the area.
+- Return as many real candidates as you are asked for (up to 24). Quality still matters: never pad. Do not include franchises of national chains or businesses clearly outside the area.
 Finish with save_leads.`,
     builtinTools: ['WebSearch'],
     tallyTools: ['fetch_page', 'find_domain', 'check_pipeline', 'places_search', 'save_leads'],

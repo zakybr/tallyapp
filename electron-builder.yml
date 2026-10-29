@@ -18,9 +18,13 @@ publish: null
 mac:
   icon: build/icon.icns
   category: public.app-category.business
+  # dmg for a first install, zip for the in-app updater (src/main/updater.ts)
   target:
     - target: dmg
       arch: [arm64]
+    - target: zip
+      arch: [arm64]
+  artifactName: ${productName}-${version}-${arch}-mac.${ext}
   identity: null
   hardenedRuntime: false
   darkModeSupport: true

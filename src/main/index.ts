@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
 import { retentionSweep } from './privacy'
+import { scheduleUpdateChecks } from './updater'
 import { getRepo } from './context'
 import { cancelAll } from './agents/runner'
 
@@ -68,6 +69,7 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   registerFileProtocol()
   registerDataHandlers()
+  scheduleUpdateChecks()
   const swept = retentionSweep(getRepo())
   if (swept.people) console.log(`Retention: removed ${swept.people} contacts from ${swept.companies} closed prospects`)
   createWindow()

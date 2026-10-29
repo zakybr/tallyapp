@@ -19,7 +19,9 @@ export const LeadSchema = z.object({
   note: z.string().nullable().describe('Why this looks like a fit, or what is visibly broken. One line.'),
   sourceUrl: nullableUrl.describe('Where you found this business')
 })
-export const LeadsSchema = z.object({ leads: z.array(LeadSchema).max(40) })
+/* The Lead Finder returns at most this many candidates per search. */
+export const MAX_LEADS = 24
+export const LeadsSchema = z.object({ leads: z.array(LeadSchema).max(MAX_LEADS) })
 
 export const FindingSchema = z.object({
   category: z.enum(FINDING_CATEGORIES),

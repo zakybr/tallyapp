@@ -2,6 +2,7 @@ import { CalendarCheck, Search, Columns3, Bot, Settings as Cog, type LucideIcon 
 import { TallyMark } from './Tally'
 import { Kbd } from './ui'
 import { href, type Route } from '@/lib/router'
+import { useUpdate, restartToUpdate } from '@/lib/update'
 
 const NAV: { route: Route; label: string; icon: LucideIcon; key: string }[] = [
   { route: { name: 'today' }, label: 'Today', icon: CalendarCheck, key: '1' },
@@ -12,6 +13,7 @@ const NAV: { route: Route; label: string; icon: LucideIcon; key: string }[] = [
 ]
 
 export function Sidebar({ current, runningJobs, onPalette }: { current: Route['name']; runningJobs: number; onPalette: () => void }) {
+  const update = useUpdate()
   return (
     <aside className="flex w-[212px] shrink-0 flex-col bg-chrome text-chrome-ink">
       <div className="drag flex h-[52px] items-center justify-end pr-4" />
@@ -51,7 +53,14 @@ export function Sidebar({ current, runningJobs, onPalette }: { current: Route['n
         })}
       </nav>
 
-      <div className="mt-auto px-5 pb-5 text-[11px] leading-relaxed text-chrome-ink-3">
+      {update?.state === 'ready' && (
+        <button onClick={() => void restartToUpdate(runningJobs)} className="no-drag mx-3 mt-auto mb-3 flex flex-col items-start rounded-md bg-amber px-3 py-2 text-left text-on-amber hover:bg-amber-hover">
+          <span className="text-[12.5px] font-semibold">Restart to update</span>
+          <span className="text-[11px] opacity-80">Version {update.version} is ready</span>
+        </button>
+      )}
+      {update?.state === 'downloading' && <div className="mx-3 mt-auto mb-3 text-[11px] text-chrome-ink-3">Downloading {update.version}… {update.percent}%</div>}
+      <div className={`${update?.state === 'ready' || update?.state === 'downloading' ? '' : 'mt-auto '}px-5 pb-5 text-[11px] leading-relaxed text-chrome-ink-3`}>
         <div className="text-chrome-ink-2">Tally Marketing Limited</div>
         Drafts only. Nothing sends itself.
       </div>

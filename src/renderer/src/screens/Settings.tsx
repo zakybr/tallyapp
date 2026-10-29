@@ -2,7 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { X, Plus, Download, DatabaseBackup, FolderOpen } from 'lucide-react'
 import { PageHeader, Button, Field, Input, Textarea } from '@/components/ui'
 import { useToast } from '@/components/Toast'
-import { api, useData, nzd } from '@/lib/api'
+import { api, useData, nzd, ago } from '@/lib/api'
+import { useUpdate, restartToUpdate } from '@/lib/update'
+import { useJobs } from '@/lib/jobs'
 import { applyTheme } from '@/lib/theme'
 import type { Settings as S } from '@shared/domain'
 import { localDate } from '@shared/rules'
@@ -169,6 +171,10 @@ export function Settings() {
           </div>
         </Block>
 
+        <Block title="Updates" body="Tally checks GitHub (zakybr/tallyapp) for a new release when it opens and every 6 hours, downloads it in the background and verifies it. Your data is not touched.">
+          <UpdatePanel />
+        </Block>
+
         <Block title="Data" body="Everything lives in one SQLite file on this Mac.">
           <div className="flex flex-wrap gap-2">
             <Button onClick={async () => { const r = await api.exportCsv(); if (r) { toast(`Exported ${r.files.length} tables`); void api.revealPath(r.files[0]) } }}><Download size={14} />Export CSV</Button>
@@ -195,3 +201,30 @@ function List({ items, onRemove, empty }: { items: { id: number; main: string; s
     </ul>
   )
 }
+
+function UpdatePanel() {
+  const u = useUpdate()
+  const running = useJobs().filter((j) => j.status === 'running').length
+  if (!u) return null
+  const line =
+    u.state === 'checking' ? 'Checking…'
+    : u.state === 'current' ? `You're on the latest version${u.checkedAt ? ` (checked ${ago(u.checkedAt)})` : ''}.`
+    : u.state === 'downloading' ? `Downloading ${u.version}… ${u.percent}%`
+    : u.state === 'ready' ? `Version ${u.version} is downloaded and verified.`
+    : u.state === 'error' ? `Update check failed: ${u.message}`
+    : u.state === 'unsupported' ? u.message
+    : 'Not checked yet.'
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline gap-3"><span className="num text-[22px] font-semibold">v{u.current}</span><span className={`text-[13px] ${u.state === 'error' ? 'text-danger' : 'text-ink-2'}`}>{line}</span></div>
+      {'notes' in u && u.notes && <pre className="selectable max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-rule bg-paper-raised p-3 font-sans text-[12.5px] text-ink-2">{u.notes}</pre>}
+      <div className="flex gap-2">
+        {u.state === 'ready'
+          ? <Button variant="primary" onClick={() => void restartToUpdate(running)}>Restart and update</Button>
+          : <Button disabled={u.state === 'checking' || u.state === 'downloading'} onClick={() => void api.checkForUpdates()}>Check for updates</Button>}
+        {u.state === 'unsupported' && <Button variant="ghost" onClick={() => window.open(u.releaseUrl)}>Open the release</Button>}
+      </div>
+    </div>
+  )
+}
+

@@ -11,7 +11,7 @@ import { DEFS, ORCHESTRATOR_PROMPT, asSubagent, type AgentDef } from './definiti
 import { adsTool, companiesOfficeTool, findDomainTool, fetchPageTool, pipelineCheckTool, placesTool, saveTool, siteAuditTool } from './tools'
 import type { JobContext } from './runner'
 import { tool } from '@anthropic-ai/claude-agent-sdk'
-import { LeadsSchema, ResearchSchema, ScoreSchema } from '@shared/schemas'
+import { MAX_LEADS, LeadsSchema, ResearchSchema, ScoreSchema } from '@shared/schemas'
 import { competingProspects, expectedVerdict, findDuplicate, normaliseDomain } from '@shared/rules'
 import { GAP_LABEL, type Company, type RuleOut, type Stage } from '@shared/domain'
 
@@ -187,6 +187,7 @@ function scorePrompt(companyId: number): string {
 registerJob('lead_finder', (p) => {
   const category = String(p.category ?? '').trim()
   const area = String(p.area ?? '').trim()
+  const count = Math.max(1, Math.min(MAX_LEADS, Math.round(Number(p.count) || MAX_LEADS)))
   if (!category || !area) throw new Error('Category and area are both needed.')
   return {
     title: `Find: ${category}, ${area}`,
@@ -203,7 +204,7 @@ registerJob('lead_finder', (p) => {
         emit('data:changed', { table: 'lead_runs' })
         return `Saved ${leads.length} candidates.`
       })
-      await runDef(ctx, DEFS.lead_finder, `Category: ${category}\nArea: ${area}, New Zealand\nRegions Zak works: ${realSettings(repo).regions.join(', ')}`, null, { save_leads: save })
+      await runDef(ctx, DEFS.lead_finder, `Category: ${category}\nArea: ${area}, New Zealand\nFind up to ${count} candidates. Keep going (more phrasings, suburbs nearby, directories, page two and three of results) until you have ${count} real, distinct businesses or have genuinely run out. Do not pad with chains, duplicates or businesses outside the area.\nRegions Zak works: ${realSettings(repo).regions.join(', ')}`, null, { save_leads: save })
       ctx.log('info', `${saved} candidates ready on the Find screen`)
     }
   }

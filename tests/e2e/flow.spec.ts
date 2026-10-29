@@ -21,8 +21,10 @@ test.afterAll(async () => app?.close())
 
 test('find leads, then research and score from the Find screen', async () => {
   await win.getByRole('link', { name: /Find/ }).click()
-  await win.getByLabel('Category').fill('Boat builders')
-  await win.getByLabel('Area').fill('Hibiscus Coast')
+  await win.getByRole('combobox', { name: 'Category' }).fill('Boat builders')
+  await win.keyboard.press('Escape')
+  await win.getByRole('combobox', { name: 'Area' }).fill('Hibiscus Coast')
+  await win.keyboard.press('Escape')
   await win.getByRole('button', { name: 'Find leads' }).click()
   await expect(win.getByRole('cell', { name: 'Harbour Hulls Ltd', exact: true })).toBeVisible()
   await win.getByLabel('Select Harbour Hulls Ltd').check()

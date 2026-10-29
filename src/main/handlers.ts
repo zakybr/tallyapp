@@ -9,6 +9,7 @@ import { CALL_OUTCOME_LABEL, type TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
 import { deleteCompanyFully, retentionSweep } from './privacy'
+import { checkForUpdates, installUpdate, updateStatus } from './updater'
 import { start } from './agents/jobs'
 import './agents/research'
 import './agents/prepare'
@@ -128,6 +129,9 @@ export function registerDataHandlers(): void {
     return { file: pick.filePath }
   })
   handle('runRetention', async () => { const r = retentionSweep(repo); changed('contacts'); return r })
+  handle('updateStatus', async () => updateStatus())
+  handle('checkForUpdates', async () => checkForUpdates())
+  handle('installUpdate', async () => installUpdate())
   handle('revealPath', async (p) => { shell.showItemInFolder(p) })
   // Only files Tally wrote (audits, evidence) can be opened from the renderer.
   handle('openPath', async (p) => {

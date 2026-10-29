@@ -148,8 +148,8 @@ export function placesTool(ctx: JobContext) {
   return tool(
     'places_search',
     'Official Google Places API text search (only available because Zak added a Places key). Returns name, address, phone, website, rating, review count, business status and the Maps URL.',
-    { query: z.string() },
-    async ({ query }) => {
+    { query: z.string(), pageToken: z.string().optional().describe('nextPageToken from a previous call, for the next 20 results') },
+    async ({ query, pageToken }) => {
       const key = realSettings(getRepo()).placesApiKey
       if (!key) return fail('No Places API key in Settings.')
       ctx.log('tool', `Places API: ${query}`)
@@ -157,9 +157,9 @@ export function placesTool(ctx: JobContext) {
         method: 'POST',
         headers: {
           'content-type': 'application/json', 'X-Goog-Api-Key': key,
-          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,places.googleMapsUri'
+          'X-Goog-FieldMask': 'nextPageToken,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,places.googleMapsUri'
         },
-        body: JSON.stringify({ textQuery: query, regionCode: 'NZ', pageSize: 20 }),
+        body: JSON.stringify({ textQuery: query, regionCode: 'NZ', pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
         signal: AbortSignal.timeout(20_000)
       })
       if (!res.ok) return fail(`Places API ${res.status}: ${(await res.text()).slice(0, 300)}`)

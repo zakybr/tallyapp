@@ -108,6 +108,17 @@ Claude Agent SDK in main, SQLite via better-sqlite3. Source of truth for the met
 2. Run a site audit from the installed .app once to confirm Playwright works outside dev.
 3. Install: open the .dmg, drag Tally to Applications, then right-click → Open the first time (unsigned).
 
+## Updates (from 0.2.0)
+
+- Installed copies update themselves from GitHub releases of `zakybr/tallyapp` (`src/main/updater.ts`): check on launch
+  and every 6 hours, download the `-arm64-mac.zip`, verify SHA-256 against GitHub's asset digest, unpack, and on
+  "Restart to update" swap the .app bundle with a detached script. Electron's Squirrel updater can't be used because the
+  app is unsigned. The database lives in the user data folder, so updates never touch it.
+- **To ship an update:** bump `version` in package.json, commit, push, then
+  `node scripts/release.mjs "What changed"` (builds dmg + zip, creates release `v<version>`, uploads both).
+- The repo is public, so release files are downloadable by anyone; nothing secret is in the build.
+- Test hook: `TALLY_UPDATE_AS_VERSION=0.0.1` makes a copy believe it is older, to exercise a real update.
+
 ## Commands
 
     npm run dev        # hot-reload app
