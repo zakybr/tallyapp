@@ -73,6 +73,10 @@ const FIXTURES: Record<string, (prompt: string) => Record<string, unknown>> = {
     ],
     fixes: [{ fix: 'Make the phone number a tap-to-call link', diy: true }, { fix: 'Install GA4 and the Meta pixel', diy: false }, { fix: 'Show your Google reviews on the homepage', diy: true }]
   }),
+  save_touch_draft: (prompt) => ({
+    subject: /as an email/i.test(prompt) ? 'Thanks for Tuesday' : null,
+    body: `Hi Sam,\n\nThanks for showing me round the yard.\n\nYour point that hulls sell before launch or not at all has stuck with me.\n\nI'm going to put it to the next builder I meet.\n\nZak\nTally\ntallynz.co`
+  }),
   save_debrief: (prompt) => {
     const notes = prompt.split('"""')[1] ?? ''
     if (/don'?t (call|contact)|remove me|stop/i.test(notes)) {

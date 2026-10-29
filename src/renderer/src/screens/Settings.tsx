@@ -171,6 +171,12 @@ export function Settings() {
           </div>
         </Block>
 
+        <Block title="Reminders" body="Relationship touches: a count in the menu bar, and one notification each morning listing who is due.">
+          <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" className="accent-[var(--amber)]" checked={s.reminders.enabled} onChange={(e) => void commit({ reminders: { ...s.reminders, enabled: e.target.checked } })} />Morning notification</label>
+          <div className="w-40"><Field label="Time"><Input type="time" value={s.reminders.time} onChange={(e) => setS({ ...s, reminders: { ...s.reminders, time: e.target.value } })} onBlur={() => void commit({ reminders: s.reminders, remindersLastNotifiedOn: null })} /></Field></div>
+          <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" className="accent-[var(--amber)]" checked={s.reminders.openAtLogin} onChange={(e) => void commit({ reminders: { ...s.reminders, openAtLogin: e.target.checked } })} />Open Tally in the menu bar when you log in, so the reminder still arrives with no window open</label>
+        </Block>
+
         <Block title="Updates" body="Tally checks GitHub (zakybr/tallyapp) for a new release when it opens and every 6 hours, downloads it in the background and verifies it. Your data is not touched.">
           <UpdatePanel />
         </Block>

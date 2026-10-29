@@ -121,7 +121,7 @@ export const HYPE_WORDS = [
   'incredible', 'best-in-class', 'turbocharge', 'massive', '10x', 'boost your', 'grow your business'
 ]
 
-const US_SPELLINGS: [RegExp, string][] = [
+export const US_SPELLINGS: [RegExp, string][] = [
   [/\boptimiz/i, 'optimis'], [/\borganiz/i, 'organis'], [/\banalyz/i, 'analys'], [/\bcolor\b/i, 'colour'],
   [/\bcenter\b/i, 'centre'], [/\bprioritiz/i, 'prioritis'], [/\brealiz/i, 'realis'], [/\bfavorite/i, 'favourite'],
   [/\bbehavior/i, 'behaviour'], [/\bcatalog\b/i, 'catalogue'], [/\bmodeling\b/i, 'modelling']

@@ -1,21 +1,23 @@
-import { LayoutDashboard, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, Handshake, type LucideIcon } from 'lucide-react'
+import { api, useData } from '@/lib/api'
 import { TallyMark } from './Tally'
 import { Kbd } from './ui'
 import { href, type Route } from '@/lib/router'
 import { useUpdate, restartToUpdate } from '@/lib/update'
-import { api } from '@/lib/api'
 import type { UpdateState } from '@shared/version'
 
 const NAV: { route: Route; label: string; icon: LucideIcon; key: string }[] = [
   { route: { name: 'today' }, label: 'Home', icon: LayoutDashboard, key: '1' },
   { route: { name: 'find' }, label: 'Find', icon: Search, key: '2' },
   { route: { name: 'pipeline' }, label: 'Pipeline', icon: Columns3, key: '3' },
+  { route: { name: 'relationships' }, label: 'Relationships', icon: Handshake, key: '5' },
   { route: { name: 'agents' }, label: 'Agents', icon: Bot, key: '4' },
   { route: { name: 'settings' }, label: 'Settings', icon: Cog, key: ',' }
 ]
 
 export function Sidebar({ current, runningJobs, onPalette }: { current: Route['name']; runningJobs: number; onPalette: () => void }) {
   const update = useUpdate()
+  const { data: dueCount = 0 } = useData(() => api.relationshipsDueCount())
   return (
     <aside className="flex w-[212px] shrink-0 flex-col bg-chrome text-chrome-ink">
       <div className="drag flex h-[52px] items-center justify-end pr-4" />
@@ -34,7 +36,7 @@ export function Sidebar({ current, runningJobs, onPalette }: { current: Route['n
 
       <nav className="flex flex-col gap-0.5 px-3">
         {NAV.map(({ route, label, icon: Icon, key }) => {
-          const active = current === route.name || (route.name === 'pipeline' && current === 'prospect')
+          const active = current === route.name || (route.name === 'pipeline' && current === 'prospect') || (route.name === 'relationships' && current === 'person')
           return (
             <a
               key={label}
@@ -46,6 +48,9 @@ export function Sidebar({ current, runningJobs, onPalette }: { current: Route['n
               {active && <span className="absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r bg-amber" />}
               <Icon size={16} strokeWidth={1.75} className={active ? 'text-amber' : ''} />
               <span className="flex-1">{label}</span>
+              {label === 'Relationships' && dueCount > 0 && (
+                <span title={`${dueCount} touch${dueCount === 1 ? '' : 'es'} due`} className="num rounded bg-amber px-1.5 text-[12px] font-bold text-on-amber">{dueCount}</span>
+              )}
               {label === 'Agents' && runningJobs > 0 && (
                 <span className="num rounded bg-amber px-1.5 text-[12px] font-bold text-on-amber">{runningJobs}</span>
               )}

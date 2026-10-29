@@ -9,6 +9,7 @@ import { CALL_OUTCOME_LABEL, type TodaySummary } from '@shared/domain'
 import { runningJobs } from './agents/registry'
 import { maskedSettings, saveSettingsSecure } from './secrets'
 import { deleteCompanyFully, retentionSweep } from './privacy'
+import { applyLoginItem, refreshReminders } from './relationships/reminders'
 import { checkForUpdates, installUpdate, updateStatus } from './updater'
 import { start } from './agents/jobs'
 import './agents/research'
@@ -40,7 +41,12 @@ export function registerDataHandlers(): void {
   handle('markSent', async (id) => { const o = repo.markSent(id); changed('outreach', o.companyId); return o })
 
   handle('getSettings', async () => maskedSettings(repo))
-  handle('saveSettings', async (patch) => { const s = saveSettingsSecure(repo, patch); changed('settings'); return s })
+  handle('saveSettings', async (patch) => {
+    const s = saveSettingsSecure(repo, patch)
+    if (patch.reminders) { applyLoginItem(); refreshReminders() }
+    changed('settings')
+    return s
+  })
 
   handle('listSuppression', async () => repo.listSuppression())
   handle('addSuppression', async (e) => { repo.addSuppression(e); changed('suppression') })

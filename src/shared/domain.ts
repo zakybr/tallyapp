@@ -273,6 +273,10 @@ export interface Settings {
   split: RevenueSplit
   sender: { name: string; company: string; phone: string; email: string; website: string }
   theme: 'system' | 'light' | 'dark'
+  /* Relationships: morning reminder of due touches, and the menu-bar count. */
+  reminders: { enabled: boolean; time: string; openAtLogin: boolean }
+  /* Written only by main, so a Settings save can never re-arm today's notification. */
+  remindersLastNotifiedOn: string | null
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -310,12 +314,14 @@ export const DEFAULT_SETTINGS: Settings = {
     email: 'zak@tallynz.co',
     website: 'tallynz.co'
   },
-  theme: 'system'
+  theme: 'system',
+  reminders: { enabled: true, time: '08:00', openAtLogin: true },
+  remindersLastNotifiedOn: null
 }
 
 export type JobKind =
   | 'lead_finder' | 'research' | 'score' | 'opener' | 'call_script'
-  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'prepare' | 'pipeline' | 'check'
+  | 'email_sequence' | 'audit_pdf' | 'debrief' | 'prepare' | 'pipeline' | 'check' | 'relationship_touch'
 
 export const JOB_LABEL: Record<JobKind, string> = {
   lead_finder: 'Lead Finder',
@@ -328,7 +334,8 @@ export const JOB_LABEL: Record<JobKind, string> = {
   debrief: 'Debrief Agent',
   prepare: 'Prepare',
   pipeline: 'Orchestrator',
-  check: 'Connection check'
+  check: 'Connection check',
+  relationship_touch: 'Relationship drafter'
 }
 
 export type JobStatus = 'running' | 'done' | 'failed' | 'cancelled'

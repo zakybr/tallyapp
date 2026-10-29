@@ -208,5 +208,79 @@ CREATE TABLE money_moves (
 );
 CREATE INDEX money_moves_at ON money_moves(moved_at);
 `
+  },
+  {
+    version: 4,
+    name: 'relationships',
+    sql: `
+CREATE TABLE people (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT,
+  company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+  phone TEXT,
+  phone_source TEXT,
+  email TEXT,
+  email_source_url TEXT,
+  linkedin_url TEXT,
+  how_met TEXT,
+  introduced_by TEXT,
+  interests TEXT,
+  tags TEXT NOT NULL DEFAULT '[]',
+  stage TEXT NOT NULL DEFAULT 'identified',
+  cadence TEXT NOT NULL DEFAULT '{}',
+  met_on TEXT,
+  last_touch_on TEXT,
+  next_touch_on TEXT,
+  next_touch_kind TEXT,
+  next_touch_manual INTEGER NOT NULL DEFAULT 0,
+  pitch_override_at TEXT,
+  external_ids TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX people_stage ON people(stage);
+CREATE INDEX people_next ON people(next_touch_on);
+
+CREATE TABLE interactions (
+  id INTEGER PRIMARY KEY,
+  person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  occurred_on TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  touch_kind TEXT,
+  notes TEXT,
+  told_me TEXT,
+  advice TEXT,
+  promised TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX interactions_person ON interactions(person_id, occurred_on);
+
+CREATE TABLE promises (
+  id INTEGER PRIMARY KEY,
+  person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  interaction_id INTEGER REFERENCES interactions(id) ON DELETE SET NULL,
+  text TEXT NOT NULL,
+  done_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX promises_person ON promises(person_id);
+
+CREATE TABLE relationship_drafts (
+  id INTEGER PRIMARY KEY,
+  person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  touch_kind TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  overrode_pitch_gate INTEGER NOT NULL DEFAULT 0,
+  sent_by_me_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- For a later HubSpot or Notion sync: {"hubspot":"123","notion":"abc"}
+ALTER TABLE companies ADD COLUMN external_ids TEXT NOT NULL DEFAULT '{}';
+`
   }
 ]

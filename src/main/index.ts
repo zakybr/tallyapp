@@ -4,6 +4,9 @@ import { resolve, sep } from 'node:path'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
+import { registerRelationshipHandlers } from './relationships/handlers'
+import { openedAtLogin, startReminders } from './relationships/reminders'
+import './agents/relationships'
 import { retentionSweep } from './privacy'
 import { scheduleUpdateChecks } from './updater'
 import { getRepo } from './context'
@@ -66,13 +69,28 @@ function createWindow(): BrowserWindow {
 }
 
 
+/* Bring the window up (creating it if closed) and go to a route, e.g. from the menu bar or a notification. */
+function openTo(hash: string): void {
+  const win = BrowserWindow.getAllWindows()[0] ?? createWindow()
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  if (!hash) return
+  const go = () => win.webContents.send('tally:nav', { to: hash })
+  if (win.webContents.isLoading()) win.webContents.once('did-finish-load', go)
+  else go()
+}
+
 app.whenReady().then(() => {
   registerFileProtocol()
   registerDataHandlers()
   scheduleUpdateChecks()
   const swept = retentionSweep(getRepo())
   if (swept.people) console.log(`Retention: removed ${swept.people} contacts from ${swept.companies} closed prospects`)
-  createWindow()
+  registerRelationshipHandlers()
+  startReminders(openTo)
+  // Launched at login: live in the menu bar until Zak opens a window.
+  if (!openedAtLogin()) createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

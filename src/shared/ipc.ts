@@ -7,6 +7,7 @@ import type {
   CallOutcome, GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary, MoneyMove
 } from './domain'
 import type { UpdateState } from './version'
+import type { DueItem, InteractionInput, Person, PersonDetail, PersonInput, PersonPatch, RelDraft } from './relationships'
 
 export interface AppInfo {
   version: string
@@ -64,6 +65,19 @@ export interface TallyApi {
   backup(): Promise<{ file: string } | null>
   revealPath(path: string): Promise<void>
 
+  listPeople(): Promise<Person[]>
+  personDetail(id: number): Promise<PersonDetail | null>
+  createPerson(input: PersonInput): Promise<Person>
+  updatePerson(id: number, patch: PersonPatch): Promise<Person>
+  erasePerson(id: number): Promise<void>
+  exportPersonData(id: number): Promise<{ file: string } | null>
+  logInteraction(input: InteractionInput): Promise<Person>
+  setPromiseDone(id: number, done: boolean): Promise<void>
+  relationshipsDue(): Promise<DueItem[]>
+  relationshipsDueCount(): Promise<number>
+  updateRelDraft(id: number, patch: { subject?: string | null; body?: string }): Promise<RelDraft>
+  markRelDraftSent(id: number): Promise<Person>
+
   updateStatus(): Promise<UpdateState>
   checkForUpdates(): Promise<UpdateState>
   installUpdate(): Promise<void>
@@ -80,7 +94,7 @@ export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
   'upsertContact', 'deletePerson', 'exportPerson', 'runRetention', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
-  'listRevenue', 'addRevenue', 'removeRevenue', 'listMoneyMoves', 'addMoneyMove', 'removeMoneyMove', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
+  'listRevenue', 'addRevenue', 'removeRevenue', 'listMoneyMoves', 'addMoneyMove', 'removeMoneyMove', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'listPeople', 'personDetail', 'createPerson', 'updatePerson', 'erasePerson', 'exportPersonData', 'logInteraction', 'relationshipsDueCount', 'setPromiseDone', 'relationshipsDue', 'updateRelDraft', 'markRelDraftSent', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
 ]
 
 export interface TallyEvents {
