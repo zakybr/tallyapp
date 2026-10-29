@@ -282,5 +282,35 @@ CREATE TABLE relationship_drafts (
 -- For a later HubSpot or Notion sync: {"hubspot":"123","notion":"abc"}
 ALTER TABLE companies ADD COLUMN external_ids TEXT NOT NULL DEFAULT '{}';
 `
+  },
+  {
+    version: 5,
+    name: 'boards',
+    sql: `
+-- Board content lives in Boards/<id>/board.json; this is the index for the library.
+CREATE TABLE boards (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  tags TEXT NOT NULL DEFAULT '[]',
+  folder TEXT NOT NULL DEFAULT '',
+  favourite INTEGER NOT NULL DEFAULT 0,
+  is_template INTEGER NOT NULL DEFAULT 0,
+  trashed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE board_links (
+  board_id TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+  person_id INTEGER REFERENCES people(id) ON DELETE CASCADE,
+  company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE
+);
+CREATE INDEX board_links_board ON board_links(board_id);
+CREATE TABLE board_presets (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  style TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+`
   }
 ]

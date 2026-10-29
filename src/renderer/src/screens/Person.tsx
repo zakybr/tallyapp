@@ -11,6 +11,7 @@ import { DraftTouch } from '@/components/relationships/DraftTouch'
 import { DraftCard } from '@/components/relationships/DraftCard'
 import { useJobs } from '@/lib/jobs'
 import { RunLog } from '@/components/RunLog'
+import { LinkedBoards } from '@/components/boards/LinkedBoards'
 import { localDate } from '@shared/rules'
 import { DEFAULT_CADENCE, INTERACTION_LABEL, REL_STAGES, REL_STAGE_LABEL, TOUCH_KINDS, TOUCH_LABEL, type Cadence, type PersonPatch, type RelStage, type TouchKind } from '@shared/relationships'
 
@@ -120,6 +121,7 @@ export function PersonPage({ id }: { id: number }) {
               <dd><InlineField value={p.tags.join(', ')} placeholder="marine, Hibiscus Coast" onSave={(v) => save({ tags: (v ?? '').split(',').map((t) => t.trim()).filter(Boolean) })} /></dd>
             </dl>
           </Section>
+          <LinkedBoards personId={id} />
           <Section title="Interests"><InlineField multiline value={p.interests} placeholder="Things they mentioned outside work" onSave={(v) => save({ interests: v })} /></Section>
           <Section title="Cadence" aside={<span className="text-[11.5px] text-ink-3">days after meeting</span>}>
             <div className="grid grid-cols-2 gap-x-3 gap-y-2">

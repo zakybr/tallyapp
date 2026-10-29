@@ -1,10 +1,12 @@
 import { app, BrowserWindow, shell, nativeTheme, protocol, net } from 'electron'
 import { pathToFileURL } from 'node:url'
+import { existsSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerDataHandlers } from './handlers'
 import { registerRelationshipHandlers } from './relationships/handlers'
+import { registerBoardHandlers } from './boards/handlers'
 import { openedAtLogin, startReminders } from './relationships/reminders'
 import './agents/relationships'
 import { retentionSweep } from './privacy'
@@ -17,13 +19,36 @@ const here = fileURLToPath(new URL('.', import.meta.url))
 app.setName('Tally')
 
 /* tally-file://evidence/<path> serves screenshots from the user data folder only. */
-protocol.registerSchemesAsPrivileged([{ scheme: 'tally-file', privileges: { standard: true, secure: true, supportFetchAPI: true } }])
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'tally-file', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
+  // Excalidraw fetch()es its fonts for exports; file:// can't be fetched, so the bundled fonts are served from here.
+  { scheme: 'tally-assets', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }
+])
+function registerAssetProtocol(): void {
+  const roots = [join(here, '../renderer/excalidraw'), join(app.getAppPath(), 'src/renderer/public/excalidraw')]
+  const root = roots.find((r) => existsSync(r)) ?? roots[0]
+  protocol.handle('tally-assets', (req) => {
+    const p = resolve(root, decodeURIComponent(new URL(req.url).pathname).replace(/^\/+/, ''))
+    if (!p.startsWith(root + sep)) return new Response('Forbidden', { status: 403 })
+    return net.fetch(pathToFileURL(p).href).then((r) => {
+      const headers = new Headers(r.headers)
+      headers.set('Access-Control-Allow-Origin', '*')
+      return new Response(r.body, { status: r.status, headers })
+    })
+  })
+}
+
 function registerFileProtocol(): void {
   const root = resolve(app.getPath('userData'))
   protocol.handle('tally-file', (req) => {
     const p = resolve(decodeURIComponent(new URL(req.url).searchParams.get('p') ?? ''))
     if (!p.startsWith(root + sep)) return new Response('Forbidden', { status: 403 })
-    return net.fetch(pathToFileURL(p).href)
+    // The page reads board media with fetch() (PDF pages, image data), so allow it cross-origin; it is still user-data only.
+    return net.fetch(pathToFileURL(p).href).then((r) => {
+      const headers = new Headers(r.headers)
+      headers.set('Access-Control-Allow-Origin', '*')
+      return new Response(r.body, { status: r.status, headers })
+    })
   })
 }
 
@@ -83,11 +108,13 @@ function openTo(hash: string): void {
 
 app.whenReady().then(() => {
   registerFileProtocol()
+  registerAssetProtocol()
   registerDataHandlers()
   scheduleUpdateChecks()
   const swept = retentionSweep(getRepo())
   if (swept.people) console.log(`Retention: removed ${swept.people} contacts from ${swept.companies} closed prospects`)
   registerRelationshipHandlers()
+  registerBoardHandlers()
   startReminders(openTo)
   // Launched at login: live in the menu bar until Zak opens a window.
   if (!openedAtLogin()) createWindow()

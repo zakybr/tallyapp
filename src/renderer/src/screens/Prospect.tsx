@@ -7,6 +7,7 @@ import { navigate } from '@/lib/router'
 import { VerdictBadge, Section } from '@/components/ui'
 import { InlineField } from '@/components/InlineField'
 import { Contacts } from '@/components/prospect/Contacts'
+import { LinkedBoards } from '@/components/boards/LinkedBoards'
 import { Timeline } from '@/components/prospect/Timeline'
 import { TallyLoader, EmptyState } from '@/components/Tally'
 import { useToast } from '@/components/Toast'
@@ -91,6 +92,7 @@ export function Prospect({ id }: { id: number }) {
               <dd><input type="checkbox" checked={c.offsiteOnly} onChange={(e) => void save({ offsiteOnly: e.target.checked })} className="accent-[var(--amber)]" /></dd>
             </dl>
           </Section>
+          <LinkedBoards companyId={id} />
           <Section title="Contacts"><Contacts companyId={id} contacts={d.contacts} suppression={suppression ?? []} /></Section>
           <Section title="Notes"><InlineField multiline value={c.notes} placeholder="Anything worth remembering" onSave={(v) => save({ notes: v })} /></Section>
           <Section title="Timeline"><Timeline companyId={id} activities={d.activities} /></Section>

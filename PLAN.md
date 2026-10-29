@@ -10,6 +10,7 @@ Phase 0 output for [FEATURES_BRIEF.md](FEATURES_BRIEF.md). Written 29 Oct 2026 f
 - **Built-in screen recording is dropped.** Zak records with QuickTime (whole desktop). Boards still play dropped-in `.mov`/`.mp4` files inline. Phase 3 is now present mode only, so Screen Recording, Camera, Microphone and Accessibility permissions are no longer needed. Section 3.3's recording plan is kept below for reference only.
 - Canvas: Excalidraw (pending Zak's view on the font limit).
 - **Phase 1 (Relationships) built** 29 Oct 2026; see CHANGES.md.
+- **Phase 2 (Boards) built** 30 Oct 2026 with Excalidraw: Tally fonts via swapped font files in three of its slots; see CHANGES.md.
 
 ## 0. Read this first: code signing
 

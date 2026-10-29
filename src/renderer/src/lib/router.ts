@@ -11,6 +11,8 @@ export type Route =
   | { name: 'settings' }
   | { name: 'relationships'; tab?: 'due' | 'board' | 'people' }
   | { name: 'person'; id: number }
+  | { name: 'boards'; tab?: 'all' | 'favourites' | 'templates' | 'trash' }
+  | { name: 'board'; id: string }
 
 export function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/')
@@ -23,6 +25,8 @@ export function parse(hash: string): Route {
     case 'settings': return { name: 'settings' }
     case 'relationships': return { name: 'relationships', tab: (parts[1] as 'due' | 'board' | 'people') || undefined }
     case 'person': return { name: 'person', id: Number(parts[1]) }
+    case 'boards': return { name: 'boards', tab: (parts[1] as 'all' | 'favourites' | 'templates' | 'trash') || undefined }
+    case 'board': return { name: 'board', id: parts[1] }
     default: return { name: 'today' }
   }
 }
@@ -34,6 +38,8 @@ export function href(r: Route): string {
     case 'agents': return r.jobId ? `#/agents/${r.jobId}` : '#/agents'
     case 'relationships': return r.tab ? `#/relationships/${r.tab}` : '#/relationships'
     case 'person': return `#/person/${r.id}`
+    case 'boards': return r.tab ? `#/boards/${r.tab}` : '#/boards'
+    case 'board': return `#/board/${r.id}`
     default: return `#/${r.name}`
   }
 }

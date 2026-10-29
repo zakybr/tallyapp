@@ -2,6 +2,43 @@
 
 Per-phase log for [FEATURES_BRIEF.md](FEATURES_BRIEF.md). The plan is in [PLAN.md](PLAN.md).
 
+## Phase 2: Boards (30 Oct 2026)
+
+### Built
+- **Boards** in the sidebar (⌘6):
+  - A library with thumbnails, search by name or tag, folders, favourites, templates, and trash with restore. Trashed boards are deleted for good after 30 days.
+  - Import a `.tallyboard` file.
+- **Editor:** an Excalidraw canvas (MIT) with infinite pan and zoom, grid and snap, every shape (rectangle, rounded rectangle, ellipse, diamond, line, arrow and connectors that stay attached, freehand), text, sticky notes, frames, group, align, distribute, layers, lock, duplicate, undo and redo, and paste. It works fully offline: its fonts are bundled.
+- **Tally fonts and styles:**
+  - **Heading** (Barlow Condensed), **Body** (General Sans) and **Label** (JetBrains Mono) buttons apply Tally's fonts to selected text.
+  - Excalidraw's font picker still shows its own names for these slots: Lilita One is Barlow Condensed, Nunito is General Sans, Comic Shanns is JetBrains Mono.
+  - Style presets: **Tally** (#0B0B0A ink, #F2EDE4 cream) and **Tally accent** (#D9711A), plus "Save current style as preset".
+- **Media:**
+  - **Add media** or drag in images, PDFs (pick the page) and videos (`.mp4` and QuickTime `.mov`, which play inline).
+  - Everything is copied into the board's `assets/` folder, so moving the original never breaks a board.
+  - A video copied to another board brings its file along.
+- **Saving:**
+  - Each board is a folder at `~/Library/Application Support/Tally/Boards/<id>/` containing `board.json`, `assets/`, `thumbnail.png` and `versions/`.
+  - Autosave runs 800 ms after you stop editing, and saves are atomic.
+  - **Versions:** named snapshots you can restore. Restoring saves the current state as a version first.
+- **Templates:** save any board as a template ("Enquiry-to-revenue system"), then pick it under New board.
+- **Links:** link a board to people and companies; it then shows on their pages.
+- **Export:**
+  - PNG or PDF, of the whole board or one per frame (frames work as slides).
+  - A portable `.tallyboard` file (a zip of the folder) for backups or another Mac.
+
+### Verified
+- The QA run from the brief (`node scripts/qa-board.mjs <profile> <media> <shots>`):
+  1. Drew every shape type with the real mouse and keyboard, applied a text style and a preset, and added an image, a PDF page, an MP4 and a QuickTime MOV.
+  2. Quit and relaunched. All 15 elements came back, the arrow was still attached at both ends, both images reloaded, and both videos **played** (the MP4 to 1.2 s of 4 s, the MOV to 1.2 s of 3 s). The thumbnail and the snapshot were there.
+- 69 unit tests (5 new for the board store: save and reload, snapshots, .tallyboard round trip, rejecting bad zips and path tricks, trash purge) and 11 e2e tests, including a new board flow across a restart.
+- A code review found 4 issues, all fixed. For example, undoing a deleted image would have lost it on the next reopen.
+
+### Notes
+- Excalidraw lists a CDN as a fallback for its fonts. The app's security policy blocks it, so you may see harmless console messages. Every font loads from the bundled copy.
+- Arbitrary system fonts and a free weight control aren't available. That's the Excalidraw trade-off noted in PLAN.md section 2.
+- Present mode (frames as slides, laser pointer) is Phase 3.
+
 ## Phase 1: Relationships (29 Oct 2026)
 
 ### Built

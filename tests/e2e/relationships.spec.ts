@@ -62,7 +62,7 @@ test('the pitch gate warns before "Invited to share"', async () => {
 test('board and due list show the person', async () => {
   await win.keyboard.press('Escape')
   await win.getByRole('link', { name: /Relationships/ }).click()
-  await win.getByRole('link', { name: 'Board' }).click()
+  await win.getByRole('link', { name: 'Board', exact: true }).click()
   await expect(win.locator('article', { hasText: 'Sam Fictional' })).toContainText('Touched today')
   await win.getByRole('link', { name: 'People' }).click()
   await expect(win.getByRole('cell', { name: /Fictional Hulls Ltd/ })).toBeVisible()

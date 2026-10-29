@@ -1,3 +1,6 @@
+/* Excalidraw loads its fonts from here (bundled by scripts/excalidraw-assets.mjs) instead of a CDN. */
+;(window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH = 'tally-assets://excalidraw/'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/index.css'

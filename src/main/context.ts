@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 import { openDatabase, Repo } from './db/repo'
 import { RelRepo } from './db/relationships'
+import { BoardStore } from './boards/store'
 
 /* Process-wide singletons: one database, one repo per area. */
 let repo: Repo | null = null
@@ -30,4 +31,10 @@ export function getRepo(): Repo {
 export function getRelRepo(): RelRepo {
   if (!relRepo) relRepo = new RelRepo(getRepo().db)
   return relRepo
+}
+
+let boardStore: BoardStore | null = null
+export function getBoardStore(): BoardStore {
+  if (!boardStore) boardStore = new BoardStore(getRepo().db, join(dataDir(), 'Boards'))
+  return boardStore
 }

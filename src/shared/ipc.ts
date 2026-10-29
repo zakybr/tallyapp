@@ -7,6 +7,7 @@ import type {
   CallOutcome, GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary, MoneyMove
 } from './domain'
 import type { UpdateState } from './version'
+import type { BoardAsset, BoardFile, BoardMeta, BoardMetaPatch, BoardPreset, BoardSnapshot, LoadedBoard } from './boards'
 import type { DueItem, InteractionInput, Person, PersonDetail, PersonInput, PersonPatch, RelDraft } from './relationships'
 
 export interface AppInfo {
@@ -78,6 +79,31 @@ export interface TallyApi {
   updateRelDraft(id: number, patch: { subject?: string | null; body?: string }): Promise<RelDraft>
   markRelDraftSent(id: number): Promise<Person>
 
+  listBoards(opts?: { trashed?: boolean; templates?: boolean }): Promise<BoardMeta[]>
+  createBoard(name: string, fromId?: string): Promise<BoardMeta>
+  updateBoard(id: string, patch: BoardMetaPatch): Promise<BoardMeta>
+  loadBoard(id: string): Promise<LoadedBoard>
+  saveBoard(id: string, scene: { elements: unknown[]; appState: Record<string, unknown> }, newFiles: BoardFile[]): Promise<void>
+  saveBoardThumbnail(id: string, pngDataUrl: string): Promise<void>
+  pickBoardMedia(id: string): Promise<BoardAsset[]>
+  addBoardAsset(id: string, path: string): Promise<BoardAsset>
+  snapshotBoard(id: string, name: string): Promise<BoardSnapshot>
+  boardSnapshots(id: string): Promise<BoardSnapshot[]>
+  restoreBoardSnapshot(id: string, file: string): Promise<void>
+  saveBoardAsTemplate(id: string, name: string): Promise<BoardMeta>
+  trashBoard(id: string): Promise<void>
+  restoreBoard(id: string): Promise<void>
+  purgeBoard(id: string): Promise<void>
+  linkBoard(id: string, target: { personId?: number | null; companyId?: number | null }): Promise<void>
+  unlinkBoard(id: string, target: { personId?: number | null; companyId?: number | null }): Promise<void>
+  boardsFor(target: { personId?: number; companyId?: number }): Promise<BoardMeta[]>
+  boardPresets(): Promise<BoardPreset[]>
+  saveBoardPreset(name: string, style: BoardPreset['style']): Promise<void>
+  deleteBoardPreset(id: number): Promise<void>
+  exportTallyboard(id: string): Promise<{ file: string } | null>
+  importTallyboard(): Promise<BoardMeta | null>
+  exportBoardImages(id: string, kind: 'png' | 'pdf', pages: { name: string; dataUrl: string; width: number; height: number }[]): Promise<{ file: string } | null>
+
   updateStatus(): Promise<UpdateState>
   checkForUpdates(): Promise<UpdateState>
   installUpdate(): Promise<void>
@@ -94,7 +120,7 @@ export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
   'upsertContact', 'deletePerson', 'exportPerson', 'runRetention', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
-  'listRevenue', 'addRevenue', 'removeRevenue', 'listMoneyMoves', 'addMoneyMove', 'removeMoneyMove', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'listPeople', 'personDetail', 'createPerson', 'updatePerson', 'erasePerson', 'exportPersonData', 'logInteraction', 'relationshipsDueCount', 'setPromiseDone', 'relationshipsDue', 'updateRelDraft', 'markRelDraftSent', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
+  'listRevenue', 'addRevenue', 'removeRevenue', 'listMoneyMoves', 'addMoneyMove', 'removeMoneyMove', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'listPeople', 'personDetail', 'createPerson', 'updatePerson', 'erasePerson', 'exportPersonData', 'logInteraction', 'relationshipsDueCount', 'setPromiseDone', 'relationshipsDue', 'updateRelDraft', 'markRelDraftSent', 'listBoards', 'createBoard', 'updateBoard', 'loadBoard', 'saveBoard', 'saveBoardThumbnail', 'pickBoardMedia', 'addBoardAsset', 'snapshotBoard', 'boardSnapshots', 'restoreBoardSnapshot', 'saveBoardAsTemplate', 'trashBoard', 'restoreBoard', 'purgeBoard', 'linkBoard', 'unlinkBoard', 'boardsFor', 'boardPresets', 'saveBoardPreset', 'deleteBoardPreset', 'exportTallyboard', 'importTallyboard', 'exportBoardImages', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
 ]
 
 export interface TallyEvents {
@@ -108,5 +134,7 @@ export interface TallyEvents {
 export type EventName = keyof TallyEvents
 
 export interface TallyBridge extends TallyApi {
+  /* Absolute path of a dropped File (Electron webUtils), for copying media into a board. */
+  pathForFile(file: File): string
   on<E extends EventName>(event: E, cb: (payload: TallyEvents[E]) => void): () => void
 }

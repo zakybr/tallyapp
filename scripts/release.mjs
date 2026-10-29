@@ -36,7 +36,7 @@ if (!hasIdentity && !process.env.ALLOW_ADHOC) {
   console.error(`No "${IDENTITY}" code-signing certificate in Keychain. Create it (see PLAN.md section 0) or run with ALLOW_ADHOC=1.`)
   process.exit(1)
 }
-execSync(`npx electron-vite build && npx electron-builder --mac${hasIdentity ? ` -c.mac.identity="${IDENTITY}"` : ''}`, { stdio: 'inherit', env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' } })
+execSync(`node scripts/excalidraw-assets.mjs && npx electron-vite build && npx electron-builder --mac${hasIdentity ? ` -c.mac.identity="${IDENTITY}"` : ''}`, { stdio: 'inherit', env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' } })
 const files = [`release/Tally-${version}-arm64-mac.zip`, `release/Tally-${version}-arm64-mac.dmg`]
 for (const f of files) statSync(f)
 

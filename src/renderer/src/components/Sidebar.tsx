@@ -1,4 +1,4 @@
-import { LayoutDashboard, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, Handshake, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, Handshake, PenTool, type LucideIcon } from 'lucide-react'
 import { api, useData } from '@/lib/api'
 import { TallyMark } from './Tally'
 import { Kbd } from './ui'
@@ -11,6 +11,7 @@ const NAV: { route: Route; label: string; icon: LucideIcon; key: string }[] = [
   { route: { name: 'find' }, label: 'Find', icon: Search, key: '2' },
   { route: { name: 'pipeline' }, label: 'Pipeline', icon: Columns3, key: '3' },
   { route: { name: 'relationships' }, label: 'Relationships', icon: Handshake, key: '5' },
+  { route: { name: 'boards' }, label: 'Boards', icon: PenTool, key: '6' },
   { route: { name: 'agents' }, label: 'Agents', icon: Bot, key: '4' },
   { route: { name: 'settings' }, label: 'Settings', icon: Cog, key: ',' }
 ]
@@ -36,7 +37,7 @@ export function Sidebar({ current, runningJobs, onPalette }: { current: Route['n
 
       <nav className="flex flex-col gap-0.5 px-3">
         {NAV.map(({ route, label, icon: Icon, key }) => {
-          const active = current === route.name || (route.name === 'pipeline' && current === 'prospect') || (route.name === 'relationships' && current === 'person')
+          const active = current === route.name || (route.name === 'pipeline' && current === 'prospect') || (route.name === 'relationships' && current === 'person') || (route.name === 'boards' && current === 'board')
           return (
             <a
               key={label}

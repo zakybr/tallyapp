@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { ToastProvider } from './components/Toast'
 import { useJobs } from './lib/jobs'
 import { Sidebar } from './components/Sidebar'
@@ -13,6 +13,10 @@ import { Agents } from './screens/Agents'
 import { Settings } from './screens/Settings'
 import { Relationships } from './screens/Relationships'
 import { PersonPage } from './screens/Person'
+import { Boards } from './screens/Boards'
+
+// The editor pulls in Excalidraw (large), so it loads only when a board opens.
+const BoardEditor = lazy(() => import('./screens/Board').then((m) => ({ default: m.BoardEditor })))
 import { CommandPalette } from './components/CommandPalette'
 
 export function App() {
@@ -26,7 +30,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.metaKey) return
-      const map: Record<string, string> = { '1': '#/today', '2': '#/find', '3': '#/pipeline', '4': '#/agents', '5': '#/relationships', ',': '#/settings' }
+      const map: Record<string, string> = { '1': '#/today', '2': '#/find', '3': '#/pipeline', '4': '#/agents', '5': '#/relationships', '6': '#/boards', ',': '#/settings' }
       if (map[e.key]) { e.preventDefault(); navigate(map[e.key]) }
       if (e.key === 'k') { e.preventDefault(); setPalette((p) => !p) }
     }
@@ -41,8 +45,9 @@ export function App() {
     <div className="flex h-full">
       <Sidebar current={route.name} runningJobs={running} onPalette={() => setPalette(true)} />
       <main className="relative my-2 mr-2 flex-1 overflow-hidden rounded-[10px] bg-paper shadow-[var(--shadow-sheet)]">
-        <div className="drag absolute inset-x-0 top-0 h-6" />
-        <div key={route.name === 'prospect' ? `p${route.id}` : route.name === 'person' ? `person${route.id}` : route.name === 'relationships' ? 'relationships' : route.name === 'agents' ? 'agents' : route.name} className="scroll-quiet h-full overflow-y-auto">
+        {/* The board toolbar is its own drag area, so this strip would cover its buttons. */}
+        {route.name !== 'board' && <div className="drag absolute inset-x-0 top-0 h-6" />}
+        <div key={route.name === 'prospect' ? `p${route.id}` : route.name === 'person' ? `person${route.id}` : route.name === 'board' ? `board${route.id}` : route.name === 'relationships' ? 'relationships' : route.name === 'agents' ? 'agents' : route.name} className="scroll-quiet h-full overflow-y-auto">
           {route.name === 'today' && <Today />}
           {route.name === 'find' && <Find />}
           {route.name === 'pipeline' && <Pipeline />}
@@ -51,6 +56,8 @@ export function App() {
           {route.name === 'settings' && <Settings />}
           {route.name === 'relationships' && <Relationships tab={route.tab} />}
           {route.name === 'person' && <PersonPage id={route.id} />}
+          {route.name === 'boards' && <Boards tab={route.tab} />}
+          {route.name === 'board' && <Suspense fallback={null}><BoardEditor id={route.id} /></Suspense>}
         </div>
       </main>
     </div>
