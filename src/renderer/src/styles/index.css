@@ -50,6 +50,12 @@
   --pass-wash: rgba(140, 58, 43, 0.1);
   --danger: #b23a26;
 
+  /* Money split series, validated (dataviz validate_palette.js) on the paper surface. */
+  --viz-pay: #d97a0b;
+  --viz-save: #0f8a6e;
+  --viz-tax: #4169d4;
+  --viz-opex: #c0436b;
+
   --shadow-sheet: 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px -24px rgba(0, 0, 0, 0.6);
   color-scheme: light;
 }
@@ -71,6 +77,10 @@
   --pass: #e0806d;
   --pass-wash: rgba(224, 128, 109, 0.12);
   --danger: #ef7a62;
+  --viz-pay: #c9780a;
+  --viz-save: #1f9a7b;
+  --viz-tax: #5d7fe3;
+  --viz-opex: #d05a84;
   color-scheme: dark;
 }
 

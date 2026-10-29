@@ -51,6 +51,9 @@ export function registerDataHandlers(): void {
   handle('listRevenue', async () => repo.listRevenue())
   handle('addRevenue', async (r) => { repo.addRevenue(r); changed('revenue') })
   handle('removeRevenue', async (id) => { repo.removeRevenue(id); changed('revenue') })
+  handle('listMoneyMoves', async () => repo.listMoneyMoves())
+  handle('addMoneyMove', async (m) => { repo.addMoneyMove(m); changed('money_moves') })
+  handle('removeMoneyMove', async (id) => { repo.removeMoneyMove(id); changed('money_moves') })
 
   handle('today', async (): Promise<TodaySummary> => {
     const s = repo.getSettings()

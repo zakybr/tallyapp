@@ -1,4 +1,4 @@
-import { CalendarCheck, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Search, Columns3, Bot, Settings as Cog, Download, RefreshCw, type LucideIcon } from 'lucide-react'
 import { TallyMark } from './Tally'
 import { Kbd } from './ui'
 import { href, type Route } from '@/lib/router'
@@ -7,7 +7,7 @@ import { api } from '@/lib/api'
 import type { UpdateState } from '@shared/version'
 
 const NAV: { route: Route; label: string; icon: LucideIcon; key: string }[] = [
-  { route: { name: 'today' }, label: 'Today', icon: CalendarCheck, key: '1' },
+  { route: { name: 'today' }, label: 'Home', icon: LayoutDashboard, key: '1' },
   { route: { name: 'find' }, label: 'Find', icon: Search, key: '2' },
   { route: { name: 'pipeline' }, label: 'Pipeline', icon: Columns3, key: '3' },
   { route: { name: 'agents' }, label: 'Agents', icon: Bot, key: '4' },

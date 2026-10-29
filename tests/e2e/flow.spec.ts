@@ -110,7 +110,7 @@ test('an opt-out blocks all email to that company', async () => {
 })
 
 test('Today and the command palette', async () => {
-  await win.getByRole('link', { name: /Today/ }).click()
+  await win.getByRole('link', { name: /Home/ }).click()
   await expect(win.getByRole('heading', { name: 'Calls to make' })).toBeVisible()
   await expect(win.getByText('Live proposals')).toBeVisible()
   await win.keyboard.press('Meta+k')

@@ -1,3 +1,4 @@
+import { DEFAULT_CAR_GOAL, DEFAULT_SPLIT, type CarGoal, type RevenueSplit } from './money'
 /*
   The Tally domain. One file so the main process, preload and renderer agree
   on every shape that crosses IPC.
@@ -225,6 +226,19 @@ export interface Conflict {
   createdAt: string
 }
 
+/* Money Zak moved out of the business account: to himself, to savings, to the tax account, or to the car fund. */
+export const MOVE_KINDS = ['pay', 'save', 'tax', 'car'] as const
+export type MoveKind = (typeof MOVE_KINDS)[number]
+export const MOVE_LABEL: Record<MoveKind, string> = { pay: 'Paid to me', save: 'To savings', tax: 'To tax account', car: 'To car fund' }
+
+export interface MoneyMove {
+  id: number
+  kind: MoveKind
+  amount: number
+  movedAt: string
+  note: string | null
+}
+
 export interface Revenue {
   id: number
   companyId: number | null
@@ -255,6 +269,8 @@ export interface Settings {
   auditDelayMs: number
   /* Months after a Pass or Lost before contact people are deleted (Privacy Act IPP 9). */
   retentionMonths: number
+  carGoal: CarGoal
+  split: RevenueSplit
   sender: { name: string; company: string; phone: string; email: string; website: string }
   theme: 'system' | 'light' | 'dark'
 }
@@ -285,6 +301,8 @@ export const DEFAULT_SETTINGS: Settings = {
   model: '',
   auditDelayMs: 2500,
   retentionMonths: 12,
+  carGoal: DEFAULT_CAR_GOAL,
+  split: DEFAULT_SPLIT,
   sender: {
     name: 'Zak Rachmadi',
     company: 'Tally Marketing Limited',

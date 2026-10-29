@@ -4,7 +4,7 @@
 */
 import type {
   Company, CompanyDetail, CompanyInput, CompanyPatch, Conflict, Contact, ContactInput, Job, JobLogEntry,
-  CallOutcome, GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary
+  CallOutcome, GapType, JobKind, LeadCandidate, Outreach, Revenue, Settings, Suppression, TodaySummary, MoneyMove
 } from './domain'
 import type { UpdateState } from './version'
 
@@ -45,6 +45,9 @@ export interface TallyApi {
   listRevenue(): Promise<Revenue[]>
   addRevenue(r: Omit<Revenue, 'id'>): Promise<void>
   removeRevenue(id: number): Promise<void>
+  listMoneyMoves(): Promise<MoneyMove[]>
+  addMoneyMove(m: Omit<MoneyMove, 'id'>): Promise<void>
+  removeMoneyMove(id: number): Promise<void>
 
   today(): Promise<TodaySummary>
 
@@ -77,7 +80,7 @@ export const API_METHODS: ApiMethod[] = [
   'appInfo', 'listCompanies', 'companyGaps', 'getCompany', 'createCompany', 'updateCompany', 'deleteCompany', 'addNote',
   'upsertContact', 'deletePerson', 'exportPerson', 'runRetention', 'updateOutreach', 'markSent', 'getSettings', 'saveSettings',
   'listSuppression', 'addSuppression', 'removeSuppression', 'listConflicts', 'addConflict', 'removeConflict',
-  'listRevenue', 'addRevenue', 'removeRevenue', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
+  'listRevenue', 'addRevenue', 'removeRevenue', 'listMoneyMoves', 'addMoneyMove', 'removeMoneyMove', 'today', 'listLeadRuns', 'addLeads', 'startJob', 'cancelJob', 'listJobs', 'jobLog', 'agentInfo', 'exportCsv', 'backup', 'revealPath', 'updateStatus', 'checkForUpdates', 'installUpdate', 'openPath', 'logCall'
 ]
 
 export interface TallyEvents {

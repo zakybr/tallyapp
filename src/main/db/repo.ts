@@ -7,7 +7,7 @@ import { MIGRATIONS } from './migrations'
 import {
   DEFAULT_SETTINGS, STAGES,
   type Activity, type ActivityKind, type Company, type CompanyDetail, type CompanyInput, type CompanyPatch,
-  type Conflict, type Contact, type GapType, type LeadCandidate, type ContactInput, type Debrief, type InstagramBenchmarkRow, type Job, type JobLogEntry,
+  type Conflict, type Contact, type GapType, type MoneyMove, type LeadCandidate, type ContactInput, type Debrief, type InstagramBenchmarkRow, type Job, type JobLogEntry,
   type Outreach, type OutreachKind, type ResearchRecord, type Revenue, type Score, type Settings, type Stage, type Suppression
 } from '@shared/domain'
 import { normaliseDomain } from '@shared/rules'
@@ -422,6 +422,18 @@ export class Repo {
     this.db.prepare('INSERT INTO revenue (company_id, amount, kind, received_at, note) VALUES (?, ?, ?, ?, ?)').run(r.companyId, r.amount, r.kind, r.receivedAt, r.note)
   }
 
+  listMoneyMoves(): MoneyMove[] {
+    return (this.db.prepare('SELECT * FROM money_moves ORDER BY moved_at DESC, id DESC').all() as Row[]).map((r) => mapRow<MoneyMove>(r))
+  }
+
+  addMoneyMove(m: Omit<MoneyMove, 'id'>): void {
+    this.db.prepare('INSERT INTO money_moves (kind, amount, moved_at, note) VALUES (?, ?, ?, ?)').run(m.kind, m.amount, m.movedAt, m.note)
+  }
+
+  removeMoneyMove(id: number): void {
+    this.db.prepare('DELETE FROM money_moves WHERE id = ?').run(id)
+  }
+
   removeRevenue(id: number): void {
     this.db.prepare('DELETE FROM revenue WHERE id = ?').run(id)
   }
@@ -435,7 +447,9 @@ export class Repo {
       ...DEFAULT_SETTINGS,
       ...stored,
       rateCard: { ...DEFAULT_SETTINGS.rateCard, ...(stored.rateCard ?? {}) },
-      sender: { ...DEFAULT_SETTINGS.sender, ...(stored.sender ?? {}) }
+      sender: { ...DEFAULT_SETTINGS.sender, ...(stored.sender ?? {}) },
+      carGoal: { ...DEFAULT_SETTINGS.carGoal, ...(stored.carGoal ?? {}) },
+      split: { ...DEFAULT_SETTINGS.split, ...(stored.split ?? {}) }
     }
   }
 
@@ -494,6 +508,7 @@ export class Repo {
 }
 
 export const EXPORTABLE = [
+  'money_moves',
   'companies', 'contacts', 'research_records', 'benchmarks', 'scores', 'outreach', 'activities', 'debriefs',
   'suppression_list', 'conflicts', 'revenue', 'jobs'
 ]

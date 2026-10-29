@@ -44,7 +44,7 @@ test('settings persist and the duplicate guard works', async () => {
   const cap = win.getByLabel('Live proposal cap')
   await cap.fill('4')
   await cap.blur()
-  await win.getByRole('link', { name: /Today/ }).click()
+  await win.getByRole('link', { name: /Home/ }).click()
   await win.getByRole('link', { name: /Settings/ }).click()
   await expect(win.getByLabel('Live proposal cap')).toHaveValue('4')
 

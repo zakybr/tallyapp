@@ -194,5 +194,19 @@ CREATE TABLE lead_runs (
   created_at TEXT NOT NULL
 );
 `
+  },
+  {
+    version: 3,
+    name: 'money_moves',
+    sql: `
+CREATE TABLE money_moves (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL,
+  amount REAL NOT NULL,
+  moved_at TEXT NOT NULL,
+  note TEXT
+);
+CREATE INDEX money_moves_at ON money_moves(moved_at);
+`
   }
 ]
