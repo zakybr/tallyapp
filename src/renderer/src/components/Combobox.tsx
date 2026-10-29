@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import type { CatalogGroup } from '@shared/catalog'
 
+/* Case- and macron-insensitive: "whangaparaoa" finds Whangaparāoa. */
+const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
 /*
   Free-text input with a grouped, searchable dropdown. Typing filters; the
   arrow keys move, Enter picks, Escape closes. Anything typed is allowed.
@@ -20,10 +23,10 @@ export function Combobox({ value, onChange, groups, placeholder, label }: {
   const list = useRef<HTMLUListElement>(null)
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = fold(query.trim())
     const seen = new Set<string>()
     return groups
-      .map((g) => ({ group: g.group, items: g.items.filter((i) => { const k = i.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return !q || k.includes(q) }) }))
+      .map((g) => ({ group: g.group, items: g.items.filter((i) => { const k = fold(i); if (seen.has(k)) return false; seen.add(k); return !q || k.includes(q) }) }))
       .filter((g) => g.items.length)
   }, [groups, query])
   const flat = filtered.flatMap((g) => g.items)

@@ -15,8 +15,10 @@ describe('updates', () => {
 
 describe('find catalogue and limits', () => {
   it('ships a full catalogue with no duplicates inside a group', () => {
-    expect(CATEGORY_CATALOG.flatMap((g) => g.items).length).toBeGreaterThan(50)
-    expect(AREA_CATALOG.flatMap((g) => g.items).length).toBeGreaterThan(60)
+    expect(CATEGORY_CATALOG.flatMap((g) => g.items).length).toBeGreaterThan(180)
+    expect(AREA_CATALOG.flatMap((g) => g.items).length).toBeGreaterThan(280)
+    const auckland = AREA_CATALOG.filter((g) => !/Island$/.test(g.group)).flatMap((g) => g.items)
+    for (const s of ['Orewa', 'Albany', 'Henderson', 'Ponsonby', 'Howick', 'Manukau', 'Pukekohe', 'Warkworth', 'Waiheke Island']) expect(auckland).toContain(s)
     for (const g of [...CATEGORY_CATALOG, ...AREA_CATALOG]) expect(new Set(g.items).size).toBe(g.items.length)
   })
   it('caps a lead search at 24', () => {
